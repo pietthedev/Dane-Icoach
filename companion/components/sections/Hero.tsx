@@ -21,6 +21,8 @@ const wordVariant = {
 export default function Hero() {
   const line1 = "Your growth,".split(" ");
   const line2 = ["supported."];
+  // SEO note: the visible H1 is the brand line. The keyword-rich context
+  // is provided by the eyebrow, lead paragraph and structured data.
 
   return (
     <section className="relative max-w-7xl mx-auto px-6 pt-10 pb-12 md:pt-14 md:pb-16">
@@ -123,7 +125,7 @@ export default function Hero() {
                 key={badge.label}
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-mist font-inter text-sm text-ink shadow-card"
               >
-                <span style={{ color: "#FF6F9F" }}>{badge.icon}</span>
+                <span aria-hidden="true" style={{ color: "#FF6F9F" }}>{badge.icon}</span>
                 {badge.label}
               </span>
             ))}
@@ -145,7 +147,7 @@ export default function Hero() {
             {/* Portrait */}
             <ImagePlaceholder
               src="/images/hero-portrait.svg"
-              alt="Danè — Hero Portrait"
+              alt="Danè de Klerk, coach and founder of Companion by Danè"
               label="Danè — Portrait (Warm, Natural)"
               fill
               className="absolute inset-0"

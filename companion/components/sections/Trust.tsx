@@ -76,7 +76,7 @@ export default function Trust() {
             variants={fadeUp}
             className="bg-white rounded-4xl p-7 shadow-soft border border-mist flex flex-col gap-4"
           >
-            <span className="text-3xl w-12 h-12 flex items-center justify-center rounded-2xl bg-mist">
+            <span aria-hidden="true" className="text-3xl w-12 h-12 flex items-center justify-center rounded-2xl bg-mist">
               {card.icon}
             </span>
             <h3 className="font-poppins font-bold text-plum-dark text-lg heading-tight">

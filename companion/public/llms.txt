@@ -1,0 +1,64 @@
+# Companion by Danè — llms.txt
+# https://llmstxt.org/
+
+# This file helps AI tools understand this website's purpose and content.
+# It is supplemental to standard HTML and structured data.
+
+## Site name
+Companion by Danè
+
+## Summary
+Companion by Danè is a human-led, AI-supported coaching platform founded by Danè de Klerk.
+It combines Danè's human coaching expertise with an always-on AI companion that helps clients
+build confidence, clarity, self-trust and purposeful action between coaching sessions.
+The platform uses an integral coaching approach — working with head, heart and body.
+It is a coaching and personal growth service. It is not therapy, medical advice, crisis support
+or any form of emergency mental-health treatment.
+
+## Primary audience
+Adults seeking personal growth, confidence, clarity and self-trust coaching.
+Available online and internationally, with a primary base in South Africa.
+
+## Key URLs
+- Homepage: https://companionai.coach/
+- About Danè: https://companionai.coach/about-dane
+- AI Coaching Companion: https://companionai.coach/ai-coaching-companion
+- Integral Coaching: https://companionai.coach/integral-coaching
+- Pricing: https://companionai.coach/pricing
+- FAQ: https://companionai.coach/faq
+- Contact: https://companionai.coach/contact
+- Resources: https://companionai.coach/resources
+- Privacy Policy: https://companionai.coach/privacy
+- Terms of Service: https://companionai.coach/terms
+- Sitemap: https://companionai.coach/sitemap.xml
+
+## Brand positioning
+Human-led. AI-supported. Warm. Premium. Reflective. Trustworthy.
+The AI companion supports reflection between sessions. Danè remains the human coaching anchor.
+
+## Key topics
+- AI coaching companion
+- Integral coaching
+- Confidence coaching
+- Self-trust coaching
+- Clarity and reflection
+- Personal growth
+- Coaching for difficult conversations
+- Finding your voice
+- Online coaching
+
+## Safety disclaimer
+This service is coaching and personal growth support. It is not therapy, psychiatry,
+psychology, medical advice, crisis intervention or emergency mental-health support.
+If you are in immediate danger, please contact your local emergency services.
+
+## Contact
+https://companionai.coach/contact
+
+## Resources / Articles
+- https://companionai.coach/resources/what-is-ai-coaching
+- https://companionai.coach/resources/what-is-integral-coaching
+- https://companionai.coach/resources/how-to-build-confidence-before-a-difficult-conversation
+- https://companionai.coach/resources/how-to-find-your-voice
+- https://companionai.coach/resources/self-trust-coaching-exercises
+- https://companionai.coach/resources/ai-coaching-vs-human-coaching
