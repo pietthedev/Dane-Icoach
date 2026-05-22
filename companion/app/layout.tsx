@@ -17,9 +17,35 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Companion by Danè — AI Coaching Companion",
+  title: "Companion by Danè | AI Coaching Companion",
   description:
-    "A human-led coaching experience, powered by an always-on AI companion that supports you between sessions — with clarity, reflection and purpose.",
+    "A human-led coaching experience powered by an always-on AI companion — with clarity, reflection and purpose.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: "Companion by Danè | AI Coaching Companion",
+    description:
+      "A human-led coaching experience powered by an always-on AI companion — with clarity, reflection and purpose.",
+    url: "https://companionai.coach",
+    siteName: "Companion by Danè",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Companion by Danè — AI Coaching Companion",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Companion by Danè | AI Coaching Companion",
+    description:
+      "A human-led coaching experience powered by an always-on AI companion — with clarity, reflection and purpose.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
