@@ -55,13 +55,16 @@ export async function POST(req: NextRequest) {
     try {
       const base = new Airtable({ apiKey }).base(baseId);
 
+      console.log('Sending to Airtable:', { Name: name, Email: email, Interest: interest })
+      console.log('Table name:', process.env.AIRTABLE_TABLE_NAME)
+      console.log('Base ID:', process.env.AIRTABLE_BASE_ID)
+
       const record = await base(tableName).create([
         {
           fields: {
-            Name: name,
-            Email: email,
-            Interest: interest || "",
-            "Signed Up": new Date().toISOString(),
+            'Name': String(name),
+            'Email': String(email),
+            'Interest': String(interest),
           },
         },
       ]);
