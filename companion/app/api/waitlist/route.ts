@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       try {
         const resend = new Resend(resendApiKey);
 
-        const emailResult = await resend.emails.send({
+        const { data, error } = await resend.emails.send({
           from: 'Companion by Danè <onboarding@resend.dev>',
           to: notificationEmail,
           subject: `New Waitlist Signup — ${name}`,
@@ -134,7 +134,11 @@ export async function POST(req: NextRequest) {
           `,
         });
 
-        console.log("[waitlist] Resend email sent:", emailResult);
+        console.log('Resend data:', JSON.stringify(data))
+        console.log('Resend error:', JSON.stringify(error))
+        if (error) {
+          console.error('Resend failed:', error)
+        }
       } catch (resendErr: unknown) {
         // Log but don't fail the request — the signup was already saved to Airtable
         const msg =
