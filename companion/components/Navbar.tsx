@@ -5,10 +5,11 @@ import Link from "next/link";
 import Logo from "./Logo";
 
 const navLinks = [
-  { href: "#", label: "Home" },
-  { href: "#coaching", label: "About" },
-  { href: "#coaching", label: "Coaching" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "/about-dane", label: "About" },
+  { href: "/ai-coaching-companion", label: "Companion" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/resources", label: "Resources" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export default function Navbar() {
@@ -43,7 +44,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7" aria-label="Main navigation">
           {navLinks.map((link) => (
             <Link
               key={link.label}
@@ -54,10 +55,10 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
-            href="#start"
+            href="/#start"
             className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum-dark hover:bg-plum transition-colors duration-200 shadow-soft"
           >
-            Get Started
+            Join early access
           </Link>
         </nav>
 
@@ -65,8 +66,9 @@ export default function Navbar() {
         <button
           className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-mist transition-colors"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
+          aria-label="Toggle navigation menu"
           aria-expanded={menuOpen}
+          aria-controls="mobile-nav"
         >
           <span
             className={`block w-5 h-0.5 bg-plum-dark transition-all duration-300 ${menuOpen ? "rotate-45 translate-y-2" : ""}`}
@@ -82,11 +84,13 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ${menuOpen ? "max-h-72 opacity-100" : "max-h-0 opacity-0"}`}
+        id="mobile-nav"
+        className={`md:hidden overflow-hidden transition-all duration-300 ${menuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
         style={{
           background: "rgba(255,255,255,0.97)",
           backdropFilter: "blur(20px)",
         }}
+        aria-hidden={!menuOpen}
       >
         <div className="px-6 py-4 flex flex-col gap-4 border-t border-mist">
           {navLinks.map((link) => (
@@ -100,11 +104,11 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
-            href="#start"
-            className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum-dark text-center"
+            href="/#start"
+            className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum-dark text-center mt-1"
             onClick={() => setMenuOpen(false)}
           >
-            Get Started
+            Join early access
           </Link>
         </div>
       </div>

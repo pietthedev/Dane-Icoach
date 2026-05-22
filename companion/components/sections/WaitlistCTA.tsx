@@ -19,6 +19,7 @@ export default function WaitlistCTA() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [interest, setInterest] = useState("");
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -114,40 +115,45 @@ export default function WaitlistCTA() {
                 className="bg-white rounded-[28px] p-7 flex flex-col gap-4 shadow-strong"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
+                  <label htmlFor="waitlist-name" className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
                     Name
                   </label>
                   <input
+                    id="waitlist-name"
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your first name"
+                    autoComplete="given-name"
                     disabled={status === "loading"}
                     className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors disabled:opacity-60"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
+                  <label htmlFor="waitlist-email" className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
                     Email
                   </label>
                   <input
+                    id="waitlist-email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
+                    autoComplete="email"
                     disabled={status === "loading"}
                     className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors disabled:opacity-60"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
+                  <label htmlFor="waitlist-interest" className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
                     Interest
                   </label>
                   <select
+                    id="waitlist-interest"
                     value={interest}
                     onChange={(e) => setInterest(e.target.value)}
                     disabled={status === "loading"}
@@ -159,6 +165,27 @@ export default function WaitlistCTA() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                {/* Consent checkbox */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="waitlist-consent"
+                    type="checkbox"
+                    required
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    disabled={status === "loading"}
+                    className="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-mist accent-plum-dark disabled:opacity-60 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="waitlist-consent"
+                    className="font-inter text-xs text-muted leading-relaxed cursor-pointer"
+                  >
+                    I agree to be contacted about Companion by Danè and
+                    understand this is a coaching service, not therapy or
+                    emergency support.
+                  </label>
                 </div>
 
                 {/* Error message */}
