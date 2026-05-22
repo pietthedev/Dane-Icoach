@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         const resend = new Resend(resendApiKey);
 
         const emailResult = await resend.emails.send({
-          from: "Companion Waitlist <onboarding@resend.dev>",
+          from: 'Companion by Danè <onboarding@resend.dev>',
           to: notificationEmail,
           subject: `New Waitlist Signup — ${name}`,
           html: `
