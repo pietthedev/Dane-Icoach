@@ -12,7 +12,9 @@
       "mcp__Claude_Preview__preview_start",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git init *)"
+      "Bash(git init *)",
+      "Bash(node scripts/generate-brand-assets.mjs)",
+      "Bash(git push *)"
     ]
   }
 }
