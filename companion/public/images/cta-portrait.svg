@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8E1F7"/>
+      <stop offset="100%" style="stop-color:#F3D7E6"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  <text x="200" y="235" text-anchor="middle" font-family="Georgia, serif" font-size="28" fill="#4B2E83">📸</text>
+  <text x="200" y="265" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#7E64B5" font-style="italic">Danè — CTA Portrait</text>
+  <text x="200" y="292" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#6E667A">400 × 500 · CTA Section</text>
+</svg>

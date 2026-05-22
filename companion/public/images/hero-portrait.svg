@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="700" viewBox="0 0 600 700">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E8E1F7"/>
+      <stop offset="100%" style="stop-color:#F3D7E6"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="700" fill="url(#bg)"/>
+  <text x="300" y="330" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="#7E64B5" font-style="italic">Danè — Portrait (Warm, Natural)</text>
+  <text x="300" y="360" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#6E667A">600 × 700 · Hero Section</text>
+  <text x="300" y="310" text-anchor="middle" font-family="Georgia, serif" font-size="28" fill="#4B2E83">📸</text>
+</svg>

@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #2E2A36;
+}
+
+body {
+  color: var(--foreground);
+  background: radial-gradient(circle at 18% 12%, rgba(185, 167, 230, 0.34), transparent 32%),
+    radial-gradient(circle at 85% 0%, rgba(243, 215, 230, 0.55), transparent 30%),
+    linear-gradient(180deg, #fff 0%, #faf9fd 46%, #f6f0fb 100%);
+  background-attachment: fixed;
+  font-family: var(--font-inter), sans-serif;
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .font-poppins {
+    font-family: var(--font-poppins), sans-serif;
+  }
+
+  .heading-tight {
+    letter-spacing: -0.055em;
+    line-height: 1.03;
+  }
+}
