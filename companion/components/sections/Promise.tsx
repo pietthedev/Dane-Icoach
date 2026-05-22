@@ -44,7 +44,7 @@ const pillTags = [
 
 export default function Promise() {
   return (
-    <section id="coaching" className="max-w-7xl mx-auto px-6 py-20">
+    <section id="coaching" className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <motion.div
         initial="hidden"
         whileInView="show"
@@ -62,7 +62,7 @@ export default function Promise() {
         whileInView="show"
         viewport={VP}
         variants={fadeUp}
-        className="font-poppins font-bold text-plum-dark heading-tight mb-12"
+        className="font-poppins font-bold text-plum-dark heading-tight mb-7"
         style={{ fontSize: "clamp(28px, 3.5vw, 46px)" }}
       >
         Human coaching. AI clarity. Real transformation.
@@ -73,7 +73,7 @@ export default function Promise() {
         initial="hidden"
         whileInView="show"
         viewport={VP}
-        className="grid md:grid-cols-3 gap-6 mb-14"
+        className="grid md:grid-cols-3 gap-6 mb-8"
       >
         {cards.map((card) => (
           <motion.div
@@ -108,7 +108,7 @@ export default function Promise() {
             "linear-gradient(135deg, #2E1A47 0%, #3D2468 60%, #4B2E83 100%)",
         }}
       >
-        <div className="p-10 md:p-14 flex flex-col justify-center gap-6">
+        <div className="p-8 md:p-10 flex flex-col justify-center gap-5">
           <h2
             className="font-poppins font-bold text-white heading-tight"
             style={{ fontSize: "clamp(22px, 2.8vw, 36px)" }}

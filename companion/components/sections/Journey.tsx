@@ -39,7 +39,7 @@ const steps = [
 
 export default function Journey() {
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20">
+    <section className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <motion.div
         initial="hidden"
         whileInView="show"
@@ -57,7 +57,7 @@ export default function Journey() {
         whileInView="show"
         viewport={VP}
         variants={fadeUp}
-        className="font-poppins font-bold text-plum-dark heading-tight mb-12"
+        className="font-poppins font-bold text-plum-dark heading-tight mb-7"
         style={{ fontSize: "clamp(28px, 3.5vw, 46px)" }}
       >
         Four steps to clarity and confidence

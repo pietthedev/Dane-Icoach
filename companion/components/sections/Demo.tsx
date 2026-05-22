@@ -41,7 +41,7 @@ const messages = [
 
 export default function Demo() {
   return (
-    <section id="demo" className="max-w-7xl mx-auto px-6 py-20">
+    <section id="demo" className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <div className="grid md:grid-cols-2 gap-10 items-start">
         {/* LEFT — Chat mockup */}
         <motion.div
@@ -146,7 +146,7 @@ export default function Demo() {
           whileInView="show"
           viewport={VP}
           variants={fadeUp}
-          className="flex flex-col gap-6 pt-2"
+          className="flex flex-col gap-5 pt-0"
         >
           <span className="font-inter font-semibold text-lavender uppercase tracking-widest text-xs">
             Today&apos;s reflection

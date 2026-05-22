@@ -82,7 +82,7 @@ const plans = [
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="max-w-7xl mx-auto px-6 py-20">
+    <section id="pricing" className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -100,7 +100,7 @@ export default function Pricing() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={VP}
         transition={{ duration: 0.5, delay: 0.08 }}
-        className="font-poppins font-bold text-plum-dark heading-tight mb-12 max-w-2xl"
+        className="font-poppins font-bold text-plum-dark heading-tight mb-7 max-w-2xl"
         style={{ fontSize: "clamp(28px, 3.5vw, 46px)" }}
       >
         More Danè time in the startup phase. More trust from day one.

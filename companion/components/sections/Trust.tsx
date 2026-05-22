@@ -39,7 +39,7 @@ const cards = [
 
 export default function Trust() {
   return (
-    <section id="trust" className="max-w-7xl mx-auto px-6 py-20">
+    <section id="trust" className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <motion.div
         initial="hidden"
         whileInView="show"
@@ -57,7 +57,7 @@ export default function Trust() {
         whileInView="show"
         viewport={VP}
         variants={fadeUp}
-        className="font-poppins font-bold text-plum-dark heading-tight mb-12 max-w-xl"
+        className="font-poppins font-bold text-plum-dark heading-tight mb-7 max-w-xl"
         style={{ fontSize: "clamp(28px, 3.5vw, 46px)" }}
       >
         A safe space to pause, reflect and reset.

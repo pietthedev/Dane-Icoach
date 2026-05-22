@@ -26,7 +26,7 @@ export default function WaitlistCTA() {
   }
 
   return (
-    <section id="start" className="max-w-7xl mx-auto px-6 py-20">
+    <section id="start" className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -38,7 +38,7 @@ export default function WaitlistCTA() {
             "linear-gradient(135deg, #2E1A47 0%, #3D2468 60%, #4B2E83 100%)",
         }}
       >
-        <div className="grid md:grid-cols-2 gap-0 p-10 md:p-16 items-center">
+        <div className="grid md:grid-cols-2 gap-0 p-8 md:p-10 items-center">
           <div className="flex flex-col gap-5 md:pr-12">
             <span
               className="font-inter font-semibold uppercase tracking-widest text-xs"

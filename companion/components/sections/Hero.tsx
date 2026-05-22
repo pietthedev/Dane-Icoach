@@ -23,14 +23,14 @@ export default function Hero() {
   const line2 = ["supported."];
 
   return (
-    <section className="relative max-w-7xl mx-auto px-6 pt-16 pb-20 md:pt-20 md:pb-28">
+    <section className="relative max-w-7xl mx-auto px-6 pt-10 pb-12 md:pt-14 md:pb-16">
       <div className="grid md:grid-cols-2 gap-12 items-center">
         {/* LEFT */}
         <motion.div
           variants={stagger}
           initial="hidden"
           animate="show"
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-4"
         >
           {/* Eyebrow */}
           <motion.div variants={fadeUp}>
@@ -112,7 +112,7 @@ export default function Hero() {
           {/* Proof badges */}
           <motion.div
             variants={fadeUp}
-            className="flex flex-wrap gap-3 pt-1"
+            className="flex flex-wrap gap-3"
           >
             {[
               { icon: "🤝", label: "Human-led" },
