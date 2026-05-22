@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
         const { data, error } = await resend.emails.send({
           from: 'Companion by Danè <onboarding@resend.dev>',
-          to: notificationEmail,
+          to: 'deklerkpieter@yahoo.co.uk',
           subject: `New Waitlist Signup — ${name}`,
           html: `
             <div style="font-family: sans-serif; max-width: 520px; margin: 0 auto; color: #2E2A36;">
