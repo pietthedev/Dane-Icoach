@@ -20,7 +20,7 @@ const inter = Inter({
 const BASE_URL = "https://companionai.coach";
 
 export const viewport: Viewport = {
-  themeColor: "#2E1A47",
+  themeColor: "#4B2E83",
   width: "device-width",
   initialScale: 1,
 };
@@ -52,9 +52,21 @@ export const metadata: Metadata = {
   alternates: {
     canonical: BASE_URL,
   },
+  manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Companion",
   },
   openGraph: {
     title: "Companion by Danè | AI Coaching Companion for Confidence & Clarity",
