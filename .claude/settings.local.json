@@ -27,7 +27,9 @@
       "Bash(Out-Null)",
       "Bash(Copy-Item -Recurse -Force \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\SBSATransferService\" \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\SBSA E4\\\\SBSATransferService\")",
       "Bash(Write-Host \"Done\")",
-      "PowerShell(Set-Location \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\companion\"; npm run build 2>&1 | Select-String -Pattern \"Export encountered|error|Error\" | Where-Object { $_ -notmatch \"prerender-error|icon|opengraph\" } | Select-Object -First 15)"
+      "PowerShell(Set-Location \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\companion\"; npm run build 2>&1 | Select-String -Pattern \"Export encountered|error|Error\" | Where-Object { $_ -notmatch \"prerender-error|icon|opengraph\" } | Select-Object -First 15)",
+      "Bash(git commit *)",
+      "Bash(git rm *)"
     ]
   }
 }

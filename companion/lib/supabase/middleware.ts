@@ -36,13 +36,11 @@ export async function updateSession(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const { data: role, error } = await adminClient
+    const { data: role } = await adminClient
       .from('admin_roles')
       .select('role')
       .eq('user_id', user.id)
       .single()
-
-    console.log('ADMIN CHECK user:', user.id, 'role:', role, 'error:', error)
 
     if (!role) return NextResponse.redirect(new URL('/portal', request.url))
   }
