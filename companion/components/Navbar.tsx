@@ -55,6 +55,12 @@ export default function Navbar() {
             </Link>
           ))}
           <Link
+            href="/auth/login"
+            className="font-inter font-semibold text-sm text-plum-dark px-5 py-2.5 rounded-full border border-plum-dark hover:bg-mist transition-colors duration-200"
+          >
+            Sign in
+          </Link>
+          <Link
             href="/#start"
             className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum-dark hover:bg-plum transition-colors duration-200 shadow-soft"
           >
@@ -103,6 +109,13 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/auth/login"
+            className="font-inter font-semibold text-sm text-plum-dark px-5 py-2.5 rounded-full border border-plum-dark text-center mt-1 hover:bg-mist transition-colors duration-200"
+            onClick={() => setMenuOpen(false)}
+          >
+            Sign in
+          </Link>
           <Link
             href="/#start"
             className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum-dark text-center mt-1"
