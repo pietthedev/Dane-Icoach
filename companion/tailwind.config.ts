@@ -14,6 +14,10 @@ const config: Config = {
           DEFAULT: "#4B2E83",
         },
         lavender: "#7E64B5",
+        // Portal design tokens (additive — do not change above)
+        "lavender-light": "#B9A7E6",
+        peach: "#FFC8A6",
+        line: "rgba(75,46,131,0.14)",
         mist: "#E8E1F7",
         blush: "#F3D7E6",
         accent: "#FF6F9F",

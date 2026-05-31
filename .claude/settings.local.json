@@ -14,7 +14,20 @@
       "Bash(git commit -m ' *)",
       "Bash(git init *)",
       "Bash(node scripts/generate-brand-assets.mjs)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\companion\" -Force -Filter \".env*\")",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(gh pr *)",
+      "Bash(command -v gh)",
+      "PowerShell($ghCmd = Get-Command gh -ErrorAction SilentlyContinue; if \\($ghCmd\\) { $ghCmd.Source } else { \"not found\" }; Get-ChildItem \"C:\\\\Program Files\\\\GitHub CLI\\\\\" -ErrorAction SilentlyContinue | Select-Object Name)",
+      "Bash(git checkout *)",
+      "Bash(\"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" auth status)",
+      "Bash(dotnet --version)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\SBSA E4\")",
+      "Bash(Out-Null)",
+      "Bash(Copy-Item -Recurse -Force \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\SBSATransferService\" \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\SBSA E4\\\\SBSATransferService\")",
+      "Bash(Write-Host \"Done\")",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\companion\"; npm run build 2>&1 | Select-String -Pattern \"Export encountered|error|Error\" | Where-Object { $_ -notmatch \"prerender-error|icon|opengraph\" } | Select-Object -First 15)"
     ]
   }
 }
