@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendBookingConfirmation } from '@/lib/email'
 import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
@@ -9,13 +10,13 @@ export async function POST(req: NextRequest) {
 
     const secret = process.env.CALENDLY_WEBHOOK_SECRET
     if (secret && signature) {
-      const [, t, , v1] = signature.split(',').reduce((acc: Record<string, string>, part) => {
+      const parts = signature.split(',').reduce((acc: Record<string, string>, part) => {
         const [k, val] = part.split('=')
         acc[k] = val
         return acc
-      }, {}) as unknown as string[]
-      const hash = crypto.createHmac('sha256', secret).update(`${t}.${body}`).digest('hex')
-      if (hash !== v1) {
+      }, {})
+      const hash = crypto.createHmac('sha256', secret).update(`${parts['t']}.${body}`).digest('hex')
+      if (hash !== parts['v1']) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
       }
     }
@@ -27,26 +28,59 @@ export async function POST(req: NextRequest) {
       case 'invitee.created': {
         const { email, name, event: calEvent } = event.payload as Record<string, unknown>
         const calEventData = calEvent as Record<string, unknown>
+        const inviteeEmail = email as string
+        const inviteeName = name as string
+        const scheduledAt = calEventData.start_time as string
+        const sessionType = String(calEventData.name ?? 'Coaching session')
+        const meetingUrl = (calEventData.location as Record<string, string>)?.join_url ?? ''
 
-        // Look up user by email
-        const { data: profile } = await supabase.from('profiles').select('id').eq('email', email as string).single()
+        // Look up user profile by email
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, first_name')
+          .eq('email', inviteeEmail)
+          .single()
 
         await supabase.from('bookings').upsert({
           user_id: profile?.id ?? null,
-          scheduled_at: calEventData.start_time as string,
-          session_type: String(calEventData.name ?? 'Coaching session'),
+          scheduled_at: scheduledAt,
+          session_type: sessionType,
           status: 'confirmed',
-          meeting_url: (calEventData.location as Record<string, string>)?.join_url ?? null,
+          meeting_url: meetingUrl || null,
           calendly_event_uri: calEventData.uri as string,
-          invitee_name: name as string,
-          invitee_email: email as string,
+          invitee_name: inviteeName,
+          invitee_email: inviteeEmail,
         }, { onConflict: 'calendly_event_uri' })
+
+        // Send booking confirmation email
+        if (inviteeEmail) {
+          const firstName = profile?.first_name ?? inviteeName.split(' ')[0] ?? 'there'
+          const sessionDate = new Date(scheduledAt).toLocaleDateString('en-ZA', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+          })
+          const sessionTime = new Date(scheduledAt).toLocaleTimeString('en-ZA', {
+            hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
+          })
+
+          sendBookingConfirmation(
+            inviteeEmail,
+            firstName,
+            sessionType,
+            sessionDate,
+            sessionTime,
+            meetingUrl,
+          ).catch(err => console.error('[email] sendBookingConfirmation failed:', err))
+        }
         break
       }
+
       case 'invitee.canceled': {
         const { event: calEvent } = event.payload as Record<string, unknown>
         const calEventData = calEvent as Record<string, unknown>
-        await supabase.from('bookings').update({ status: 'cancelled' }).eq('calendly_event_uri', calEventData.uri as string)
+        await supabase
+          .from('bookings')
+          .update({ status: 'cancelled' })
+          .eq('calendly_event_uri', calEventData.uri as string)
         break
       }
     }
