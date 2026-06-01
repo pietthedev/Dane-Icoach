@@ -1,3 +1,4 @@
+Set-Content -Path "app\portal\conversations\page.tsx" -Encoding UTF8 -Value @'
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -72,7 +73,7 @@ export default function ConversationsPage() {
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle()
+      .single()
     setSummary(data as Summary ?? null)
     setLoadingSummary(false)
   }
@@ -262,3 +263,5 @@ export default function ConversationsPage() {
     </div>
   )
 }
+'@
+Write-Host "OK app\portal\conversations\page.tsx" -ForegroundColor Green

@@ -10,7 +10,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('first_name, last_name, avatar_url, plan')
+    .select('full_name, avatar_url, plan')
     .eq('id', user.id)
     .single()
 

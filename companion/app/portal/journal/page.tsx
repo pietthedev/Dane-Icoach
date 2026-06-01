@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -11,7 +11,6 @@ interface JournalEntry {
   body: string
   mood_score: number | null
   created_at: string
-  share_with_coach: boolean
 }
 
 interface Goal {
@@ -19,7 +18,7 @@ interface Goal {
   title: string
   category: string | null
   target_date: string | null
-  progress: number
+  progress_pct: number
 }
 
 const ENTRY_STYLES: Record<EntryType, string> = {
@@ -52,8 +51,8 @@ export default function JournalPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const [e, g] = await Promise.all([
-      supabase.from('journal_entries').select('id, entry_type, body, mood_score, created_at, share_with_coach').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('goals').select('id, title, category, target_date, progress').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('journal_entries').select('id, entry_type, body, mood_score, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20),
+      supabase.from('goals').select('id, title, category, target_date, progress_pct').eq('user_id', user.id).order('created_at', { ascending: false }),
     ])
     setEntries((e.data as JournalEntry[]) ?? [])
     setGoals((g.data as Goal[]) ?? [])
@@ -67,7 +66,7 @@ export default function JournalPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from('journal_entries').insert({ user_id: user.id, entry_type: entryType, body, mood_score: moodScore, share_with_coach: shareCoach })
+      await supabase.from('journal_entries').insert({ user_id: user.id, entry_type: entryType, body, mood_score: moodScore })
     }
     setBody(''); setMoodScore(5); setShareCoach(false); setShowEntryForm(false)
     await load()
@@ -80,7 +79,7 @@ export default function JournalPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from('goals').insert({ user_id: user.id, title: goalTitle, category: goalCategory || null, target_date: goalDate || null, progress: 0 })
+      await supabase.from('goals').insert({ user_id: user.id, title: goalTitle, category: goalCategory || null, target_date: goalDate || null, progress_pct: 0 })
     }
     setGoalTitle(''); setGoalCategory(''); setGoalDate(''); setShowGoalForm(false)
     await load()
@@ -115,11 +114,11 @@ export default function JournalPage() {
               </button>
             ))}
           </div>
-          <textarea value={body} onChange={e => setBody(e.target.value)} rows={4} placeholder="Write your reflection…"
+          <textarea value={body} onChange={e => setBody(e.target.value)} rows={4} placeholder="Write your reflectionâ€¦"
             className="w-full font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-plum resize-none mb-3" />
           <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
             <div className="flex items-center gap-2">
-              <label className="font-inter text-xs text-muted">Mood (1–10):</label>
+              <label className="font-inter text-xs text-muted">Mood (1â€“10):</label>
               <input type="range" min={1} max={10} value={moodScore} onChange={e => setMoodScore(Number(e.target.value))} className="w-24 accent-plum" />
               <span className="font-inter font-semibold text-plum text-sm">{moodScore}</span>
             </div>
@@ -131,7 +130,7 @@ export default function JournalPage() {
           <div className="flex gap-2">
             <button onClick={submitEntry} disabled={saving || !body.trim()}
               className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark disabled:opacity-60 transition-colors shadow-soft">
-              {saving ? 'Saving…' : 'Save entry'}
+              {saving ? 'Savingâ€¦' : 'Save entry'}
             </button>
             <button onClick={() => setShowEntryForm(false)} className="font-inter text-sm text-muted px-4 py-2.5 rounded-full hover:bg-mist transition-colors">Cancel</button>
           </div>
@@ -149,7 +148,7 @@ export default function JournalPage() {
             <div className="flex gap-2">
               <button onClick={submitGoal} disabled={saving || !goalTitle.trim()}
                 className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark disabled:opacity-60 transition-colors shadow-soft">
-                {saving ? 'Saving…' : 'Save goal'}
+                {saving ? 'Savingâ€¦' : 'Save goal'}
               </button>
               <button onClick={() => setShowGoalForm(false)} className="font-inter text-sm text-muted px-4 py-2.5 rounded-full hover:bg-mist transition-colors">Cancel</button>
             </div>
@@ -169,9 +168,9 @@ export default function JournalPage() {
                   {g.category && <span className="font-inter text-xs px-2 py-0.5 rounded-full bg-mist text-muted">{g.category}</span>}
                 </div>
                 <div className="h-1.5 rounded-full bg-mist overflow-hidden mb-1">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${g.progress}%`, background: 'linear-gradient(90deg, #4B2E83, #FF6F9F)' }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${g.progress_pct}%`, background: 'linear-gradient(90deg, #4B2E83, #FF6F9F)' }} />
                 </div>
-                <p className="font-inter text-xs text-muted">{g.progress}% complete{g.target_date ? ` · Due ${new Date(g.target_date).toLocaleDateString('en-ZA')}` : ''}</p>
+                <p className="font-inter text-xs text-muted">{g.progress_pct}% complete{g.target_date ? ` Â· Due ${new Date(g.target_date).toLocaleDateString('en-ZA')}` : ''}</p>
               </div>
             ))}
           </div>
@@ -205,3 +204,4 @@ export default function JournalPage() {
     </div>
   )
 }
+

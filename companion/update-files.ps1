@@ -1,3 +1,14 @@
+# =============================================================================
+# update-files.ps1 — Run from companion folder root
+# Updates all files with correct schema-aligned code
+# =============================================================================
+
+Write-Host "Updating files..." -ForegroundColor Cyan
+
+# =============================================================================
+# 1. app/portal/conversations/page.tsx
+# =============================================================================
+$conversationsPage = @'
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -10,12 +21,6 @@ interface Conversation {
   title: string | null
   created_at: string
   conversation_ratings?: { rating: number | null; color_tag: ColorTag; notes: string | null }[]
-}
-
-interface Summary {
-  summary: string
-  key_topics: string[]
-  action_items: string[]
 }
 
 const TAG_STYLES: Record<string, string> = {
@@ -38,8 +43,6 @@ const FILTERS = [
 export default function ConversationsPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [selected, setSelected] = useState<Conversation | null>(null)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [loadingSummary, setLoadingSummary] = useState(false)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'summary' | 'rating' | 'notes'>('summary')
@@ -62,21 +65,6 @@ export default function ConversationsPage() {
 
   useEffect(() => { load() }, [load])
 
-  async function loadSummary(conversationId: string) {
-    setLoadingSummary(true)
-    setSummary(null)
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('conversation_summaries')
-      .select('summary, key_topics, action_items')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    setSummary(data as Summary ?? null)
-    setLoadingSummary(false)
-  }
-
   function selectConv(conv: Conversation) {
     setSelected(conv)
     const r = conv.conversation_ratings?.[0]
@@ -84,7 +72,6 @@ export default function ConversationsPage() {
     setColorTag(r?.color_tag ?? null)
     setNotes(r?.notes ?? '')
     setActiveTab('summary')
-    loadSummary(conv.id)
   }
 
   const filtered = conversations.filter(c => {
@@ -155,7 +142,6 @@ export default function ConversationsPage() {
           })}
         </div>
       </div>
-
       <div className="flex-1 overflow-y-auto">
         {!selected ? (
           <div className="flex items-center justify-center h-full">
@@ -165,7 +151,6 @@ export default function ConversationsPage() {
           <div className="p-6 max-w-2xl">
             <h2 className="font-poppins font-bold text-plum-dark text-xl mb-1" style={{ letterSpacing: '-0.03em' }}>{selected.title ?? 'Conversation'}</h2>
             <p className="font-inter text-xs text-muted mb-5">{new Date(selected.created_at).toLocaleString('en-ZA')}</p>
-
             <div className="flex gap-1 bg-mist rounded-2xl p-1 mb-5 w-fit">
               {(['summary', 'rating', 'notes'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
@@ -174,43 +159,11 @@ export default function ConversationsPage() {
                 </button>
               ))}
             </div>
-
             {activeTab === 'summary' && (
               <div className="bg-white rounded-3xl p-5 border border-line">
-                {loadingSummary ? (
-                  <p className="font-inter text-muted text-sm">Loading summary...</p>
-                ) : summary ? (
-                  <div className="flex flex-col gap-4">
-                    <p className="font-inter text-sm text-ink leading-relaxed">{summary.summary}</p>
-                    {summary.key_topics?.length > 0 && (
-                      <div>
-                        <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">Key topics</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {summary.key_topics.map((t, i) => (
-                            <span key={i} className="font-inter text-xs px-2.5 py-1 rounded-full bg-plum/10 text-plum">{t}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {summary.action_items?.length > 0 && (
-                      <div>
-                        <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">Action items</p>
-                        <ul className="flex flex-col gap-1.5">
-                          {summary.action_items.map((a, i) => (
-                            <li key={i} className="font-inter text-sm text-ink flex gap-2">
-                              <span className="text-plum mt-0.5">+</span>{a}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="font-inter text-muted text-sm">No summary available for this conversation yet.</p>
-                )}
+                <p className="font-inter text-muted text-sm">Summary not available yet.</p>
               </div>
             )}
-
             {activeTab === 'rating' && (
               <div className="bg-white rounded-3xl p-5 border border-line flex flex-col gap-5">
                 <div>
@@ -241,7 +194,6 @@ export default function ConversationsPage() {
                 </button>
               </div>
             )}
-
             {activeTab === 'notes' && (
               <div className="bg-white rounded-3xl p-5 border border-line flex flex-col gap-4">
                 <textarea
@@ -262,3 +214,132 @@ export default function ConversationsPage() {
     </div>
   )
 }
+'@
+Set-Content -Path "app\portal\conversations\page.tsx" -Value $conversationsPage -Encoding UTF8
+Write-Host "OK app\portal\conversations\page.tsx" -ForegroundColor Green
+
+# =============================================================================
+# 2. app/api/portal/conversations/route.ts
+# =============================================================================
+$conversationsRoute = @'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { sendWelcomeEmail } from '@/lib/email'
+
+export async function GET() {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+    const { data } = await supabase
+      .from('conversations')
+      .select('id, title, created_at, conversation_ratings(rating, color_tag, notes)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    return NextResponse.json({ conversations: data ?? [] })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+    const { title } = await req.json() as { title?: string }
+
+    const { data, error } = await supabase
+      .from('conversations')
+      .insert({ user_id: user.id, title: title ?? null })
+      .select('id, title, created_at')
+      .single()
+
+    if (error) return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 })
+
+    const { count } = await supabase
+      .from('conversations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if (count === 1) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+      const email = user.email
+      const firstName = profile?.full_name?.split(' ')[0] ?? email?.split('@')[0] ?? 'there'
+
+      if (email) {
+        sendWelcomeEmail(email, firstName).catch(err =>
+          console.error('[email] sendWelcomeEmail failed:', err)
+        )
+      }
+    }
+
+    return NextResponse.json({ conversation: data })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+'@
+Set-Content -Path "app\api\portal\conversations\route.ts" -Value $conversationsRoute -Encoding UTF8
+Write-Host "OK app\api\portal\conversations\route.ts" -ForegroundColor Green
+
+# =============================================================================
+# 3. app/api/portal/profile/route.ts
+# =============================================================================
+$profileRoute = @'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+const ALLOWED_FIELDS = [
+  'full_name', 'phone', 'timezone', 'language_preference',
+  'pref_learn_from_ratings', 'pref_auto_summarise', 'pref_cross_session_memory',
+  'pref_email_digest', 'pref_push_notifications', 'pref_quote_of_day',
+  'consent_marketing', 'consent_data_training',
+]
+
+export async function GET() {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    return NextResponse.json({ profile: profile ?? null, email: user.email })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+    const body = await req.json() as Record<string, unknown>
+
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    for (const key of ALLOWED_FIELDS) {
+      if (key in body) updates[key] = body[key]
+    }
+
+    await supabase.from('profiles').upsert({ id: user.id, ...updates })
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+'@
+Set-Content -Path "app\api\portal\profile\route.ts" -Value $profileRoute -Encoding UTF8
+Write-Host "OK app\api\portal\profile\route.ts" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "All files updated! Now restart dev server: npm run dev" -ForegroundColor Cyan

@@ -1,4 +1,5 @@
-﻿'use client'
+Set-Content -Path "components\portal\PortalShell.tsx" -Encoding UTF8 -Value @'
+'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -203,3 +204,5 @@ export default function PortalShell({ user, profile, children }: PortalShellProp
     </div>
   )
 }
+'@
+Write-Host "OK components\portal\PortalShell.tsx" -ForegroundColor Green

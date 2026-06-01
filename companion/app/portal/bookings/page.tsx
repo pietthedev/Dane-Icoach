@@ -1,9 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 
 interface Booking {
   id: string
   scheduled_at: string
-  session_type: string | null
+  title: string | null
   status: string
   meeting_url: string | null
   pre_session_notes?: string | null
@@ -17,8 +17,8 @@ export default async function BookingsPage() {
   const now = new Date().toISOString()
 
   const [upcomingRes, pastRes, configRes] = await Promise.allSettled([
-    supabase.from('bookings').select('id, scheduled_at, session_type, status, meeting_url, pre_session_notes').eq('user_id', user.id).gte('scheduled_at', now).order('scheduled_at'),
-    supabase.from('bookings').select('id, scheduled_at, session_type, status, meeting_url').eq('user_id', user.id).lt('scheduled_at', now).order('scheduled_at', { ascending: false }).limit(10),
+    supabase.from('bookings').select('id, scheduled_at, title, status, meeting_url, pre_session_notes').eq('user_id', user.id).gte('scheduled_at', now).order('scheduled_at'),
+    supabase.from('bookings').select('id, scheduled_at, title, status, meeting_url').eq('user_id', user.id).lt('scheduled_at', now).order('scheduled_at', { ascending: false }).limit(10),
     supabase.from('system_config').select('value').eq('key', 'calendly_url').single(),
   ])
 
@@ -38,7 +38,7 @@ export default async function BookingsPage() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-poppins font-bold text-plum-dark text-2xl" style={{ letterSpacing: '-0.04em' }}>Bookings</h1>
-          <p className="font-inter text-muted text-sm mt-1">Your upcoming and past sessions with Danè</p>
+          <p className="font-inter text-muted text-sm mt-1">Your upcoming and past sessions with DanÃ¨</p>
         </div>
         {calendlyUrl && (
           <a href={calendlyUrl} target="_blank" rel="noopener noreferrer"
@@ -56,7 +56,7 @@ export default async function BookingsPage() {
             <p className="font-inter text-muted text-sm">No upcoming bookings</p>
             {calendlyUrl && (
               <a href={calendlyUrl} target="_blank" rel="noopener noreferrer" className="font-inter text-sm text-plum underline mt-2 block">
-                Book your next session →
+                Book your next session â†’
               </a>
             )}
           </div>
@@ -71,7 +71,7 @@ export default async function BookingsPage() {
                       <p className="font-inter text-[9px] uppercase">{new Date(b.scheduled_at).toLocaleString('en-ZA', { month: 'short' })}</p>
                     </div>
                     <div>
-                      <p className="font-inter font-semibold text-ink text-sm">{b.session_type ?? 'Coaching session'}</p>
+                      <p className="font-inter font-semibold text-ink text-sm">{b.title ?? 'Coaching session'}</p>
                       <p className="font-inter text-xs text-muted">{new Date(b.scheduled_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                   </div>
@@ -97,7 +97,7 @@ export default async function BookingsPage() {
             {past.map(b => (
               <div key={b.id} className="bg-white rounded-3xl p-4 border border-line flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-inter font-medium text-ink text-sm">{b.session_type ?? 'Coaching session'}</p>
+                  <p className="font-inter font-medium text-ink text-sm">{b.title ?? 'Coaching session'}</p>
                   <p className="font-inter text-xs text-muted">{new Date(b.scheduled_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
                 <span className={`font-inter font-semibold text-xs px-2.5 py-1 rounded-full ${STATUS_STYLES[b.status] ?? 'bg-mist text-muted'}`}>{b.status}</span>
@@ -109,3 +109,4 @@ export default async function BookingsPage() {
     </div>
   )
 }
+

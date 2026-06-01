@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 interface Homework {
   id: string
@@ -27,15 +27,16 @@ export default async function HomeworkPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="font-poppins font-bold text-plum-dark text-2xl mb-1" style={{ letterSpacing: '-0.04em' }}>Homework</h1>
-      <p className="font-inter text-muted text-sm mb-6">Assignments from Dane</p>
+      <p className="font-inter text-muted text-sm mb-6">Assignments from Danè — complete and submit through your journal</p>
 
+      {/* Pending */}
       <section className="mb-8">
         <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-3">
           Pending <span className="text-accent">({pending.length})</span>
         </h2>
         {pending.length === 0 ? (
           <div className="bg-white rounded-3xl p-6 border border-line text-center">
-            <p className="font-inter text-muted text-sm">No pending homework - you are all caught up!</p>
+            <p className="font-inter text-muted text-sm">No pending homework — you&apos;re all caught up!</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -60,6 +61,7 @@ export default async function HomeworkPage() {
         )}
       </section>
 
+      {/* Completed */}
       {submitted.length > 0 && (
         <section>
           <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-3">Completed</h2>
@@ -72,7 +74,7 @@ export default async function HomeworkPage() {
                 </div>
                 {h.coach_feedback && (
                   <div className="mt-3 bg-mist rounded-2xl px-4 py-3">
-                    <p className="font-inter font-semibold text-xs text-plum-dark mb-1">Feedback</p>
+                    <p className="font-inter font-semibold text-xs text-plum-dark mb-1">Danè&apos;s feedback</p>
                     <p className="font-inter text-sm text-ink leading-relaxed">{h.coach_feedback}</p>
                     {h.coach_feedback_at && <p className="font-inter text-xs text-muted mt-1">{new Date(h.coach_feedback_at).toLocaleDateString('en-ZA')}</p>}
                   </div>

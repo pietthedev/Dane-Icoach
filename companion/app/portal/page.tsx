@@ -31,30 +31,36 @@ export default async function PortalHomePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const [quoteRes, usageRes, bookingRes, hwRes, onboardingRes] = await Promise.allSettled([
-    supabase.from('quotes').select('body, author').order('created_at', { ascending: false }).limit(1).single(),
-    supabase.from('usage').select('conversations_used, conversations_limit, tokens_used, tokens_limit, voice_minutes_used, voice_minutes_limit').eq('user_id', user.id).order('period_start', { ascending: false }).limit(1).single(),
-    supabase.from('bookings').select('scheduled_at, session_type, meeting_url').eq('user_id', user.id).eq('status', 'confirmed').gte('scheduled_at', new Date().toISOString()).order('scheduled_at').limit(1).single(),
+  const [quoteRes, profileRes, bookingRes, hwRes, convRes] = await Promise.allSettled([
+    supabase.from('quotes').select('quote_text, author').eq('is_active', true).order('created_at', { ascending: false }).limit(1).single(),
+    supabase.from('profiles').select('full_name, plan, conversations_limit_monthly, conversations_used_this_month, token_limit_monthly, tokens_used_this_month').eq('id', user.id).single(),
+    supabase.from('bookings').select('scheduled_at, title, meeting_url').eq('user_id', user.id).eq('status', 'confirmed').gte('scheduled_at', new Date().toISOString()).order('scheduled_at').limit(1).single(),
     supabase.from('homework').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'pending'),
-    supabase.from('onboarding_steps').select('step_key, completed, label').eq('user_id', user.id).order('sort_order'),
+    supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
   ])
 
   const quote = quoteRes.status === 'fulfilled' ? quoteRes.value.data : null
-  const usage = usageRes.status === 'fulfilled' ? usageRes.value.data : null
+  const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : null
   const booking = bookingRes.status === 'fulfilled' ? bookingRes.value.data : null
   const hwCount = hwRes.status === 'fulfilled' ? (hwRes.value.count ?? 0) : 0
-  const steps = onboardingRes.status === 'fulfilled' ? (onboardingRes.value.data ?? []) : []
+  const convCount = convRes.status === 'fulfilled' ? (convRes.value.count ?? 0) : 0
 
-  const completedSteps = steps.filter((s: { completed: boolean }) => s.completed).length
+  const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
+
+      {/* Greeting */}
+      <h1 className="font-poppins font-bold text-plum-dark text-2xl mb-6" style={{ letterSpacing: '-0.04em' }}>
+        Welcome back, {firstName} 👋
+      </h1>
+
       {/* Quote */}
       {quote && (
         <div className="rounded-3xl p-6 mb-6 text-white" style={{ background: 'linear-gradient(135deg, #2E1A47 0%, #4B2E83 100%)' }}>
           <p className="font-inter text-xs uppercase tracking-widest mb-3 opacity-60">Quote of the day</p>
           <p className="font-poppins font-bold text-lg leading-snug mb-2" style={{ letterSpacing: '-0.02em' }}>
-            &ldquo;{quote.body}&rdquo;
+            &ldquo;{quote.quote_text}&rdquo;
           </p>
           {quote.author && <p className="font-inter text-sm opacity-70 italic">— {quote.author}</p>}
         </div>
@@ -62,41 +68,28 @@ export default async function PortalHomePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Conversations" value={String(usage?.conversations_used ?? 0)} sub={`of ${usage?.conversations_limit ?? '—'} this month`} />
+        <StatCard label="Conversations" value={String(convCount)} sub="total" />
         <StatCard label="Homework due" value={String(hwCount)} sub={hwCount === 1 ? 'item pending' : 'items pending'} />
-        <StatCard label="Next session" value={booking ? new Date(booking.scheduled_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : '—'} sub={booking?.session_type ?? 'No bookings'} />
-        <StatCard label="Voice minutes" value={String(usage?.voice_minutes_used ?? 0)} sub={`of ${usage?.voice_minutes_limit ?? '—'} used`} />
+        <StatCard label="Next session" value={booking ? new Date(booking.scheduled_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }) : '—'} sub={booking?.title ?? 'No bookings'} />
+        <StatCard label="Plan" value={profile?.plan ? profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1) : '—'} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Token usage */}
-        {usage && (
+        {/* Usage */}
+        {profile && (
           <div className="bg-white rounded-3xl p-6 border border-line shadow-card">
             <h2 className="font-poppins font-bold text-plum-dark text-base mb-4" style={{ letterSpacing: '-0.03em' }}>Usage this month</h2>
             <div className="flex flex-col gap-4">
-              <UsageMeter used={usage.conversations_used ?? 0} total={usage.conversations_limit ?? 1} label="Conversations" />
-              <UsageMeter used={usage.tokens_used ?? 0} total={usage.tokens_limit ?? 1} label="Tokens" />
-              <UsageMeter used={usage.voice_minutes_used ?? 0} total={usage.voice_minutes_limit ?? 1} label="Voice minutes" />
-            </div>
-          </div>
-        )}
-
-        {/* Onboarding checklist */}
-        {steps.length > 0 && (
-          <div className="bg-white rounded-3xl p-6 border border-line shadow-card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-poppins font-bold text-plum-dark text-base" style={{ letterSpacing: '-0.03em' }}>Getting started</h2>
-              <span className="font-inter text-xs text-muted">{completedSteps}/{steps.length}</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {steps.map((step: { step_key: string; completed: boolean; label: string }) => (
-                <div key={step.step_key} className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${step.completed ? 'bg-plum' : 'border-2 border-mist'}`}>
-                    {step.completed && <span className="text-white text-[10px]">✓</span>}
-                  </div>
-                  <span className={`font-inter text-sm ${step.completed ? 'text-muted line-through' : 'text-ink'}`}>{step.label}</span>
-                </div>
-              ))}
+              <UsageMeter
+                used={profile.conversations_used_this_month ?? 0}
+                total={profile.conversations_limit_monthly ?? 10}
+                label="Conversations"
+              />
+              <UsageMeter
+                used={profile.tokens_used_this_month ?? 0}
+                total={profile.token_limit_monthly ?? 50000}
+                label="Tokens"
+              />
             </div>
           </div>
         )}
@@ -111,7 +104,7 @@ export default async function PortalHomePage() {
                 <p className="font-inter text-[10px] uppercase">{new Date(booking.scheduled_at).toLocaleString('en-ZA', { month: 'short' })}</p>
               </div>
               <div>
-                <p className="font-inter font-semibold text-ink text-sm">{booking.session_type ?? 'Coaching session'}</p>
+                <p className="font-inter font-semibold text-ink text-sm">{booking.title ?? 'Coaching session'}</p>
                 <p className="font-inter text-xs text-muted">{new Date(booking.scheduled_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</p>
                 {booking.meeting_url && (
                   <a href={booking.meeting_url} target="_blank" rel="noopener noreferrer" className="font-inter text-xs text-plum underline mt-1 block">Join meeting →</a>

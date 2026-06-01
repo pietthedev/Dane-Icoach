@@ -1,4 +1,5 @@
-﻿import { createClient } from '@/lib/supabase/server'
+Set-Content -Path "app\portal\homework\page.tsx" -Encoding UTF8 -Value @'
+import { createClient } from '@/lib/supabase/server'
 
 interface Homework {
   id: string
@@ -85,3 +86,5 @@ export default async function HomeworkPage() {
     </div>
   )
 }
+'@
+Write-Host "OK app\portal\homework\page.tsx" -ForegroundColor Green

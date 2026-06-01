@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email'
 
@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 })
 
-    // Send welcome email on first conversation
     const { count } = await supabase
       .from('conversations')
       .select('*', { count: 'exact', head: true })
@@ -45,12 +44,12 @@ export async function POST(req: NextRequest) {
     if (count === 1) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('email, first_name')
+        .select('full_name')
         .eq('id', user.id)
         .single()
 
-      const email = profile?.email ?? user.email
-      const firstName = profile?.first_name ?? email?.split('@')[0] ?? 'there'
+      const email = user.email
+      const firstName = profile?.full_name?.split(' ')[0] ?? email?.split('@')[0] ?? 'there'
 
       if (email) {
         sendWelcomeEmail(email, firstName).catch(err =>
