@@ -7,13 +7,11 @@ export async function GET() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
-
     const { data } = await supabase
       .from('conversations')
       .select('id, title, created_at, conversation_ratings(rating, color_tag, notes)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-
     return NextResponse.json({ conversations: data ?? [] })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -26,15 +24,18 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
-    const { title } = await req.json() as { title?: string }
+    const { title, mode } = await req.json() as { title?: string; mode?: string }
 
     const { data, error } = await supabase
       .from('conversations')
-      .insert({ user_id: user.id, title: title ?? null })
+      .insert({ user_id: user.id, title: title ?? 'New conversation', mode: mode ?? 'text' })
       .select('id, title, created_at')
       .single()
 
-    if (error) return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 })
+    if (error) {
+      console.error('[conversations] Insert error:', error)
+      return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 })
+    }
 
     const { count } = await supabase
       .from('conversations')
@@ -47,10 +48,8 @@ export async function POST(req: NextRequest) {
         .select('full_name')
         .eq('id', user.id)
         .single()
-
       const email = user.email
       const firstName = profile?.full_name?.split(' ')[0] ?? email?.split('@')[0] ?? 'there'
-
       if (email) {
         sendWelcomeEmail(email, firstName).catch(err =>
           console.error('[email] sendWelcomeEmail failed:', err)

@@ -37,6 +37,7 @@ const journeyNav: NavItem[] = [
   { href: '/portal', label: 'Home', icon: '' },
   { href: '/portal/conversations', label: 'Conversations', icon: '' },
   { href: '/portal/voice', label: 'Voice session', icon: '' },
+  { href: '/portal/chat', label: 'Text chat', icon: '' },
   { href: '/portal/bookings', label: 'Bookings', icon: '' },
   { href: '/portal/journal', label: 'Journal & goals', icon: '' },
   { href: '/portal/homework', label: 'Homework', icon: '' },
