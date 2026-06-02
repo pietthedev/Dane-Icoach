@@ -26,6 +26,14 @@ const TAG_STYLES: Record<string, string> = {
   purple: 'bg-purple-100 text-purple-700',
 }
 
+const TAG_LABELS: Record<string, string> = {
+  green: 'Great',
+  blue: 'Good',
+  amber: 'Okay',
+  red: 'Poor',
+  purple: 'Insight',
+}
+
 const FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'green', label: 'Great' },
@@ -44,23 +52,50 @@ export default function ConversationsPage() {
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'summary' | 'rating' | 'notes'>('summary')
   const [rating, setRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
   const [colorTag, setColorTag] = useState<ColorTag>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+  const [savedFeedback, setSavedFeedback] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data } = await supabase
+    const { data: convData } = await supabase
       .from('conversations')
-      .select('id, title, created_at, conversation_ratings(rating, color_tag, notes)')
+      .select('id, title, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-    setConversations((data as Conversation[]) ?? [])
-  }, [])
 
-  useEffect(() => { load() }, [load])
+    const { data: ratingsData } = await supabase
+      .from('conversation_ratings')
+      .select('conversation_id, rating, color_tag, notes')
+      .eq('user_id', user.id)
+
+    const ratingsMap = Object.fromEntries(
+      (ratingsData ?? []).map(r => [r.conversation_id, r])
+    )
+
+    const convs: Conversation[] = (convData ?? []).map(c => ({
+      ...c,
+      conversation_ratings: ratingsMap[c.id] ? [ratingsMap[c.id]] : [],
+    }))
+    setConversations(convs)
+    // Refresh selected if open
+    if (selected) {
+      const refreshed = convs.find(c => c.id === selected.id)
+      if (refreshed) {
+        setSelected(refreshed)
+        const r = refreshed.conversation_ratings?.[0]
+        setRating(r?.rating ?? 0)
+        setColorTag(r?.color_tag ?? null)
+        setNotes(r?.notes ?? '')
+      }
+    }
+  }, [selected])
+
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadSummary(conversationId: string) {
     setLoadingSummary(true)
@@ -81,9 +116,11 @@ export default function ConversationsPage() {
     setSelected(conv)
     const r = conv.conversation_ratings?.[0]
     setRating(r?.rating ?? 0)
+    setHoverRating(0)
     setColorTag(r?.color_tag ?? null)
     setNotes(r?.notes ?? '')
     setActiveTab('summary')
+    setSavedFeedback(null)
     loadSummary(conv.id)
   }
 
@@ -101,8 +138,10 @@ export default function ConversationsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ conversation_id: selected.id, rating, color_tag: colorTag }),
     })
+    setSavedFeedback('Rating saved!')
     await load()
     setSaving(false)
+    setTimeout(() => setSavedFeedback(null), 3000)
   }
 
   async function saveNotes() {
@@ -113,11 +152,15 @@ export default function ConversationsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ conversation_id: selected.id, notes }),
     })
+    setSavedFeedback('Notes saved!')
+    await load()
     setSaving(false)
+    setTimeout(() => setSavedFeedback(null), 3000)
   }
 
   return (
     <div className="flex h-full">
+      {/* Sidebar */}
       <div className="w-full md:w-80 flex-shrink-0 border-r border-line flex flex-col bg-white">
         <div className="p-4 border-b border-line">
           <h1 className="font-poppins font-bold text-plum-dark text-lg mb-3" style={{ letterSpacing: '-0.03em' }}>Conversations</h1>
@@ -141,21 +184,30 @@ export default function ConversationsPage() {
           )}
           {filtered.map(conv => {
             const tag = conv.conversation_ratings?.[0]?.color_tag
+            const r = conv.conversation_ratings?.[0]?.rating
             return (
               <button key={conv.id} onClick={() => selectConv(conv)}
                 className={`w-full text-left px-4 py-3.5 border-b border-line hover:bg-cloud transition-colors ${selected?.id === conv.id ? 'bg-plum/5 border-l-2 border-l-plum' : ''}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-inter font-medium text-ink text-sm truncate">{conv.title ?? 'Conversation'}</p>
-                  {tag && <span className={`font-inter text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${TAG_STYLES[tag]}`}>{tag}</span>}
+                  {tag && (
+                    <span className={`font-inter text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${TAG_STYLES[tag]}`}>
+                      {TAG_LABELS[tag]}
+                    </span>
+                  )}
                 </div>
-                <p className="font-inter text-xs text-muted mt-0.5">{new Date(conv.created_at).toLocaleDateString('en-ZA')}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="font-inter text-xs text-muted">{new Date(conv.created_at).toLocaleDateString('en-ZA')}</p>
+                  {r ? <span className="font-inter text-xs text-yellow-500">{'★'.repeat(r)}{'☆'.repeat(5 - r)}</span> : null}
+                </div>
               </button>
             )
           })}
         </div>
       </div>
 
+      {/* Detail panel */}
       <div className="flex-1 overflow-y-auto">
         {!selected ? (
           <div className="flex items-center justify-center h-full">
@@ -165,6 +217,12 @@ export default function ConversationsPage() {
           <div className="p-6 max-w-2xl">
             <h2 className="font-poppins font-bold text-plum-dark text-xl mb-1" style={{ letterSpacing: '-0.03em' }}>{selected.title ?? 'Conversation'}</h2>
             <p className="font-inter text-xs text-muted mb-5">{new Date(selected.created_at).toLocaleString('en-ZA')}</p>
+
+            {savedFeedback && (
+              <p className="font-inter text-sm text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-2 mb-4">
+                ✓ {savedFeedback}
+              </p>
+            )}
 
             <div className="flex gap-1 bg-mist rounded-2xl p-1 mb-5 w-fit">
               {(['summary', 'rating', 'notes'] as const).map(tab => (
@@ -198,7 +256,7 @@ export default function ConversationsPage() {
                         <ul className="flex flex-col gap-1.5">
                           {summary.action_items.map((a, i) => (
                             <li key={i} className="font-inter text-sm text-ink flex gap-2">
-                              <span className="text-plum mt-0.5">+</span>{a}
+                              <span className="text-plum mt-0.5">→</span>{a}
                             </li>
                           ))}
                         </ul>
@@ -214,12 +272,15 @@ export default function ConversationsPage() {
             {activeTab === 'rating' && (
               <div className="bg-white rounded-3xl p-5 border border-line flex flex-col gap-5">
                 <div>
-                  <p className="font-inter font-semibold text-plum-dark text-sm mb-2">Session rating</p>
-                  <div className="flex gap-2">
+                  <p className="font-inter font-semibold text-plum-dark text-sm mb-3">Session rating</p>
+                  <div className="flex gap-1">
                     {[1,2,3,4,5].map(s => (
-                      <button key={s} onClick={() => setRating(s)}
-                        className={`text-2xl transition-transform hover:scale-110 ${s <= rating ? 'opacity-100' : 'opacity-30'}`}>
-                        *
+                      <button key={s}
+                        onClick={() => setRating(s)}
+                        onMouseEnter={() => setHoverRating(s)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="text-3xl transition-transform hover:scale-110 focus:outline-none">
+                        <span className={s <= (hoverRating || rating) ? 'text-yellow-400' : 'text-gray-200'}>★</span>
                       </button>
                     ))}
                   </div>
@@ -230,7 +291,7 @@ export default function ConversationsPage() {
                     {(['green','blue','amber','red','purple'] as ColorTag[]).map(c => (
                       <button key={c!} onClick={() => setColorTag(c === colorTag ? null : c)}
                         className={`font-inter text-xs px-3 py-1.5 rounded-full border-2 transition-colors ${TAG_STYLES[c!]} ${colorTag === c ? 'border-current' : 'border-transparent'}`}>
-                        {c}
+                        {TAG_LABELS[c!]}
                       </button>
                     ))}
                   </div>
