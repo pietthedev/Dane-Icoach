@@ -16,6 +16,7 @@ const footerLinks = {
   Legal: [
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Terms of Service", href: "/terms" },
+    { label: "Cookie preferences", href: "#cookie-preferences" },
     { label: "Sitemap", href: "/sitemap.xml" },
   ],
 };
@@ -24,9 +25,7 @@ export default function Footer() {
   return (
     <footer style={{ background: "#2E1A47" }} role="contentinfo">
       <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Top row */}
         <div className="grid md:grid-cols-4 gap-10 mb-10">
-          {/* Brand */}
           <div className="flex flex-col gap-4">
             <Logo variant="compact" onDark />
             <p
@@ -40,8 +39,6 @@ export default function Footer() {
               Not therapy or crisis support.
             </p>
           </div>
-
-          {/* Nav columns */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
               <p
@@ -66,8 +63,6 @@ export default function Footer() {
             </div>
           ))}
         </div>
-
-        {/* Bottom row */}
         <div
           className="flex flex-col md:flex-row items-center justify-between gap-3 pt-6"
           style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
@@ -80,10 +75,7 @@ export default function Footer() {
           </p>
           <p
             className="font-inter text-sm text-center"
-            style={{
-              color: "rgba(255,255,255,0.35)",
-              fontStyle: "italic",
-            }}
+            style={{ color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}
           >
             Find your voice. Trust yourself. Discover your superpower.
           </p>

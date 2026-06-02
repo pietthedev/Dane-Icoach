@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins, Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import CookieConsent from "@/components/CookieConsent";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -103,7 +104,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  // Webmaster verification — populate via environment variables
   ...(process.env.NEXT_PUBLIC_GSC_VERIFICATION && {
     verification: {
       google: process.env.NEXT_PUBLIC_GSC_VERIFICATION,
@@ -126,7 +126,6 @@ export default function RootLayout({
       <body className={`${poppins.variable} ${inter.variable} antialiased`}>
         {children}
 
-        {/* Google Analytics 4 — only loads when NEXT_PUBLIC_GA_ID is set */}
         {GA_ID && (
           <>
             <Script
@@ -143,6 +142,8 @@ export default function RootLayout({
             </Script>
           </>
         )}
+
+        <CookieConsent />
       </body>
     </html>
   );
