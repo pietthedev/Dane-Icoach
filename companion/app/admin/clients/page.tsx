@@ -1,117 +1,145 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
-interface Client {
+type ClientRow = {
   id: string
-  display_name: string | null
-  email: string | null
+  full_name: string | null
   plan: string | null
-  status: string | null
-  created_at: string | null
-  total_sessions: number | null
-  tokens_used: number | null
-  tokens_limit: number | null
+  member_since: string | null
+  total_conversations: number | null
   avg_rating: number | null
-  language: string | null
+  subscription_status: string | null
+  // email comes from profiles join; not in view — we fall back to id display
 }
 
-const PLAN_STYLES: Record<string, string> = {
-  start: 'bg-mist text-plum', explorer: 'bg-blue-100 text-blue-700',
-  grow: 'bg-purple-100 text-purple-700', voice: 'bg-accent/10 text-accent',
-}
-
-const STATUS_STYLES: Record<string, string> = {
-  active: 'bg-green-100 text-green-700', suspended: 'bg-red-100 text-red-700',
-  inactive: 'bg-mist text-muted',
-}
-
-export default async function ClientsPage() {
+export default async function ClientsListPage() {
   const supabase = createClient()
-  const { data } = await supabase
-    .from('admin_client_overview')
-    .select('*')
-    .order('created_at', { ascending: false })
 
-  const clients: Client[] = (data as Client[]) ?? []
+  const { data: clients, error } = await supabase
+    .from('admin_client_overview')
+    .select(
+      'id, full_name, plan, member_since, total_conversations, avg_rating, subscription_status'
+    )
+    .order('member_since', { ascending: false })
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-poppins font-bold text-plum-dark text-2xl" style={{ letterSpacing: '-0.04em' }}>Clients</h1>
-          <p className="font-inter text-muted text-sm mt-0.5">{clients.length} total</p>
+          <h1 className="font-poppins font-bold text-plum-dark text-2xl" style={{ letterSpacing: '-0.04em' }}>
+            Clients
+          </h1>
+          <p className="font-inter text-sm text-muted mt-0.5">
+            {clients?.length ?? 0} member{clients?.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <button className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft">
-          + Invite client
-        </button>
       </div>
 
-      {clients.length === 0 ? (
-        <div className="bg-white rounded-3xl p-8 border border-line text-center">
-          <p className="font-inter text-muted text-sm">No clients yet</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-3xl border border-line shadow-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-mist bg-cloud">
-                  {['Client', 'Language', 'Plan', 'Joined', 'Sessions', 'Tokens', 'Avg rating', 'Status', ''].map(h => (
-                    <th key={h} className="font-inter font-semibold text-xs text-muted uppercase tracking-wide px-4 py-3 text-left whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-mist">
-                {clients.map(c => {
-                  const tokenPct = c.tokens_limit ? ((c.tokens_used ?? 0) / c.tokens_limit) * 100 : 0
-                  return (
-                    <tr key={c.id} className="hover:bg-cloud/50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-plum/10 flex items-center justify-center flex-shrink-0">
-                            <span className="font-poppins font-bold text-plum text-[10px]">{(c.display_name ?? c.email ?? '?').slice(0,2).toUpperCase()}</span>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-inter font-medium text-ink text-sm truncate">{c.display_name ?? '—'}</p>
-                            <p className="font-inter text-xs text-muted truncate">{c.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-inter text-sm text-muted">{c.language ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`font-inter text-xs px-2.5 py-1 rounded-full ${PLAN_STYLES[c.plan ?? 'start'] ?? PLAN_STYLES.start}`}>
-                          {c.plan ?? 'start'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-inter text-xs text-muted whitespace-nowrap">
-                        {c.created_at ? new Date(c.created_at).toLocaleDateString('en-ZA') : '—'}
-                      </td>
-                      <td className="px-4 py-3 font-inter font-semibold text-ink text-sm">{c.total_sessions ?? 0}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2 w-20">
-                          <div className="flex-1 h-1.5 rounded-full bg-mist overflow-hidden">
-                            <div className="h-full rounded-full bg-plum" style={{ width: `${Math.min(tokenPct, 100)}%` }} />
-                          </div>
-                          <span className="font-inter text-[10px] text-muted">{Math.round(tokenPct)}%</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-inter text-sm text-muted">{c.avg_rating ? `${Number(c.avg_rating).toFixed(1)} ⭐` : '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`font-inter text-xs px-2.5 py-1 rounded-full ${STATUS_STYLES[c.status ?? 'active'] ?? STATUS_STYLES.active}`}>
-                          {c.status ?? 'active'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link href={`/admin/clients/${c.id}`} className="font-inter text-xs text-plum hover:underline">View</Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 mb-4">
+          <p className="font-inter text-sm text-red-600">Failed to load clients: {error.message}</p>
         </div>
       )}
+
+      <div className="bg-white rounded-3xl border border-line shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-line">
+                <th className="font-inter text-xs font-semibold text-muted uppercase tracking-wide text-left px-5 py-3.5">Client</th>
+                <th className="font-inter text-xs font-semibold text-muted uppercase tracking-wide text-left px-4 py-3.5">Plan</th>
+                <th className="font-inter text-xs font-semibold text-muted uppercase tracking-wide text-left px-4 py-3.5">Joined</th>
+                <th className="font-inter text-xs font-semibold text-muted uppercase tracking-wide text-right px-4 py-3.5">Sessions</th>
+                <th className="font-inter text-xs font-semibold text-muted uppercase tracking-wide text-right px-4 py-3.5">Avg rating</th>
+                <th className="font-inter text-xs font-semibold text-muted uppercase tracking-wide text-left px-4 py-3.5">Status</th>
+                <th className="px-5 py-3.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {!clients || clients.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="font-inter text-sm text-muted text-center py-12">
+                    No clients yet.
+                  </td>
+                </tr>
+              ) : (
+                clients.map((c: ClientRow) => (
+                  <tr key={c.id} className="border-b border-mist last:border-0 hover:bg-mist/40 transition-colors">
+                    {/* Client */}
+                    <td className="px-5 py-3.5">
+                      <p className="font-inter font-medium text-ink text-sm">{c.full_name ?? '—'}</p>
+                    </td>
+
+                    {/* Plan */}
+                    <td className="px-4 py-3.5">
+                      <span className="font-inter text-xs px-2.5 py-1 rounded-full bg-mist text-plum font-semibold capitalize">
+                        {c.plan ?? 'start'}
+                      </span>
+                    </td>
+
+                    {/* Joined */}
+                    <td className="px-4 py-3.5">
+                      <p className="font-inter text-sm text-muted">
+                        {c.member_since ? new Date(c.member_since).toLocaleDateString('en-ZA') : '—'}
+                      </p>
+                    </td>
+
+                    {/* Sessions */}
+                    <td className="px-4 py-3.5 text-right">
+                      <p className="font-inter text-sm text-ink tabular-nums">{c.total_conversations ?? 0}</p>
+                    </td>
+
+                    {/* Avg rating */}
+                    <td className="px-4 py-3.5 text-right">
+                      {c.avg_rating != null ? (
+                        <span className="font-inter text-sm text-ink tabular-nums">
+                          {'★'.repeat(Math.round(c.avg_rating))}{'☆'.repeat(5 - Math.round(c.avg_rating))}
+                          <span className="text-muted ml-1 text-xs">{c.avg_rating.toFixed(1)}</span>
+                        </span>
+                      ) : (
+                        <span className="font-inter text-sm text-muted">—</span>
+                      )}
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3.5">
+                      <StatusBadge status={c.subscription_status} />
+                    </td>
+
+                    {/* View link */}
+                    <td className="px-5 py-3.5 text-right">
+                      <Link
+                        href={`/admin/clients/${c.id}`}
+                        className="font-inter text-xs font-semibold text-plum hover:text-plum-dark transition-colors"
+                      >
+                        View →
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+  )
+}
+
+function StatusBadge({ status }: { status: string | null }) {
+  const s = status ?? 'unknown'
+  const styles: Record<string, string> = {
+    active: 'bg-green-100 text-green-700',
+    trialing: 'bg-blue-100 text-blue-700',
+    past_due: 'bg-amber-100 text-amber-700',
+    canceled: 'bg-red-100 text-red-700',
+    incomplete: 'bg-gray-100 text-gray-600',
+    unknown: 'bg-mist text-muted',
+  }
+  const cls = styles[s] ?? styles.unknown
+  return (
+    <span className={`font-inter text-[10px] px-2.5 py-1 rounded-full font-semibold capitalize ${cls}`}>
+      {s.replace('_', ' ')}
+    </span>
   )
 }
