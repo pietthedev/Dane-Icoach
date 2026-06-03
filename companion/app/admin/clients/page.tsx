@@ -1,5 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+
+// Use service-role client so RLS doesn't block reads of admin_client_overview
+function getAdminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 type ClientRow = {
   id: string
@@ -9,11 +17,10 @@ type ClientRow = {
   total_conversations: number | null
   avg_rating: number | null
   subscription_status: string | null
-  // email comes from profiles join; not in view — we fall back to id display
 }
 
 export default async function ClientsListPage() {
-  const supabase = createClient()
+  const supabase = getAdminClient()
 
   const { data: clients, error } = await supabase
     .from('admin_client_overview')

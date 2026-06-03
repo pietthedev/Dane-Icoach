@@ -1,12 +1,25 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
+// Use the service-role client so RLS never blocks admin reads of any table
+// (profiles, conversations, bookings, homework, admin_client_notes).
+function getAdminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
 export default async function ClientDetailPage({ params }: { params: { id: string } }) {
-  const supabase = createClient()
+  const supabase = getAdminClient()
 
   const [profileRes, convsRes, bookingsRes, hwRes, notesRes] = await Promise.allSettled([
-    supabase.from('profiles').select('*').eq('id', params.id).single(),
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', params.id)
+      .single(),
     supabase
       .from('conversations')
       .select('id, title, created_at, mode, conversation_ratings(rating, color_tag), conversation_summaries(summary, key_topics)')
@@ -37,27 +50,27 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   if (!profile) notFound()
 
   const conversations = convsRes.status === 'fulfilled' ? (convsRes.value.data ?? []) : []
-  const bookings = bookingsRes.status === 'fulfilled' ? (bookingsRes.value.data ?? []) : []
-  const homework = hwRes.status === 'fulfilled' ? (hwRes.value.data ?? []) : []
-  const notes = notesRes.status === 'fulfilled' ? (notesRes.value.data ?? []) : []
+  const bookings     = bookingsRes.status === 'fulfilled' ? (bookingsRes.value.data ?? []) : []
+  const homework     = hwRes.status === 'fulfilled' ? (hwRes.value.data ?? []) : []
+  const notes        = notesRes.status === 'fulfilled' ? (notesRes.value.data ?? []) : []
 
   const displayName = profile.full_name ?? profile.email ?? params.id
 
   const TAG_STYLES: Record<string, string> = {
-    green: 'bg-green-100 text-green-700',
-    blue: 'bg-blue-100 text-blue-700',
-    amber: 'bg-amber-100 text-amber-700',
-    red: 'bg-red-100 text-red-700',
+    green:  'bg-green-100 text-green-700',
+    blue:   'bg-blue-100 text-blue-700',
+    amber:  'bg-amber-100 text-amber-700',
+    red:    'bg-red-100 text-red-700',
     purple: 'bg-purple-100 text-purple-700',
   }
-
   const TAG_LABELS: Record<string, string> = {
     green: 'Great', blue: 'Good', amber: 'Okay', red: 'Poor', purple: 'Insight',
   }
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <Link href="/admin/clients" className="font-inter text-xs text-muted hover:text-plum mb-2 block">
@@ -74,16 +87,17 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Profile */}
+
+        {/* ── Profile ── */}
         <div className="bg-white rounded-3xl p-5 border border-line shadow-card">
           <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-3">Profile</h2>
           <div className="flex flex-col gap-2 font-inter text-sm">
             {[
-              ['Phone', profile.phone],
-              ['Timezone', profile.timezone],
-              ['Language', profile.language_preference],
-              ['Joined', profile.created_at ? new Date(profile.created_at).toLocaleDateString('en-ZA') : '—'],
-              ['Last active', profile.last_active_at ? new Date(profile.last_active_at).toLocaleDateString('en-ZA') : '—'],
+              ['Phone',       profile.phone],
+              ['Timezone',    profile.timezone],
+              ['Language',    profile.language_preference],
+              ['Joined',      profile.created_at      ? new Date(profile.created_at).toLocaleDateString('en-ZA')      : '—'],
+              ['Last active', profile.last_active_at  ? new Date(profile.last_active_at).toLocaleDateString('en-ZA')  : '—'],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-2">
                 <span className="text-muted">{k}</span>
@@ -93,7 +107,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           </div>
         </div>
 
-        {/* Shared conversations */}
+        {/* ── Shared conversations ── */}
         <div className="lg:col-span-2 bg-white rounded-3xl p-5 border border-line shadow-card">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide">
@@ -112,10 +126,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           ) : (
             <div className="flex flex-col gap-3 max-h-96 overflow-y-auto">
               {conversations.map((c: Record<string, unknown>) => {
-                const rating = (c.conversation_ratings as Record<string, unknown>[])?.[0]
+                const rating     = (c.conversation_ratings  as Record<string, unknown>[])?.[0]
                 const summaryObj = (c.conversation_summaries as Record<string, unknown>[])?.[0]
-                const colorTag = rating?.color_tag as string | null
-                const topics = summaryObj?.key_topics as string[] | null
+                const colorTag   = rating?.color_tag as string | null
+                const topics     = summaryObj?.key_topics as string[] | null
 
                 return (
                   <div key={c.id as string} className="border border-line rounded-2xl p-4">
@@ -136,7 +150,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                         )}
                         {rating?.rating && (
                           <span className="font-inter text-xs text-yellow-500">
-                            {'★'.repeat(rating.rating as number)}{'☆'.repeat(5 - (rating.rating as number))}
+                            {'★'.repeat(rating.rating as number)}
+                            {'☆'.repeat(5 - (rating.rating as number))}
                           </span>
                         )}
                       </div>
@@ -168,7 +183,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           )}
         </div>
 
-        {/* Bookings */}
+        {/* ── Bookings ── */}
         <div className="bg-white rounded-3xl p-5 border border-line shadow-card">
           <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-3">Bookings</h2>
           {bookings.length === 0 ? (
@@ -192,7 +207,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           )}
         </div>
 
-        {/* Homework */}
+        {/* ── Homework ── */}
         <div className="bg-white rounded-3xl p-5 border border-line shadow-card">
           <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-3">Homework</h2>
           {homework.length === 0 ? (
@@ -217,12 +232,14 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           )}
         </div>
 
-        {/* Admin notes */}
+        {/* ── Admin notes ── */}
         <div className="lg:col-span-3 bg-white rounded-3xl p-5 border border-line shadow-card">
           <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-1">
             My notes on this client
           </h2>
-          <p className="font-inter text-xs text-muted mb-3">These notes are private to you and never shown to the client.</p>
+          <p className="font-inter text-xs text-muted mb-3">
+            These notes are private to you and never shown to the client.
+          </p>
           {notes.length === 0 ? (
             <p className="font-inter text-sm text-muted">No notes yet</p>
           ) : (
@@ -238,6 +255,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             </div>
           )}
         </div>
+
       </div>
     </div>
   )
