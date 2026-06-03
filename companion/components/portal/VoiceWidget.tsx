@@ -185,7 +185,7 @@ function VoiceControls({ agentId }: VoiceWidgetProps) {
   // ── Auto-end when free limit is hit ───────────────────────────────────────
   useEffect(() => {
     if (limitHit && conversation.status === 'connected') {
-      conversation.endSession().catch(console.error)
+      try { conversation.endSession() } catch (e) { console.error(e) }
     }
   }, [limitHit, conversation])
 
