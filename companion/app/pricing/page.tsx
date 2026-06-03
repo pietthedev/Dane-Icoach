@@ -24,87 +24,70 @@ export const metadata: Metadata = {
 
 const plans = [
   {
-    name: "Start",
-    price: "Free",
-    priceNote: "",
+    name: "Free",
+    price: "R0",
+    priceNote: "/month",
     featured: false,
     badge: null,
-    description: "Try the companion and discover your superpower — no card required.",
+    description: "Try the companion — no card required. One voice session a day to get you started.",
     features: [
-      "Limited AI companion access",
-      "Discover your superpower exercise",
-      "Once-off 10-min welcome check-in with Danè",
-      "Limited weekly slots",
+      "1 voice session per day (3 minutes)",
+      "5 text conversations per month",
+      "Transcripts saved automatically",
     ],
     cta: "Start free",
-    href: "/#start",
-  },
-  {
-    name: "Explorer",
-    price: "R99",
-    priceNote: "/mo",
-    featured: false,
-    badge: null,
-    description: "Build a daily reflection habit with guided journeys and prompts.",
-    features: [
-      "AI companion access",
-      "Guided reflection journeys",
-      "Confidence and voice prompts",
-      "Monthly progress summary",
-    ],
-    cta: "Join waitlist",
-    href: "/#start",
+    href: "/auth/signup",
   },
   {
     name: "Grow",
-    price: "R249",
-    priceNote: "/mo",
+    price: "R349",
+    priceNote: "/month",
     featured: true,
-    badge: "Best start",
-    description: "The full companion experience, with a monthly human check-in from Danè.",
+    badge: "Most popular",
+    description: "The full companion experience — more voice time, unlimited text and a monthly human check-in with Danè.",
     features: [
-      "Everything in Explorer",
-      "Monthly 10–15 min Danè check-in",
-      "Personal focus theme",
-      "Priority early access",
+      "6 voice sessions per month (20 min/day)",
+      "Unlimited text conversations",
+      "Full transcripts, summaries and ratings",
+      "Share conversations with Danè",
+      "Monthly check-in with Danè",
     ],
     cta: "Choose Grow",
-    href: "/#start",
+    href: "/auth/signup",
   },
   {
-    name: "Voice",
-    price: "Custom",
-    priceNote: "",
+    name: "Business",
+    price: "R699",
+    priceNote: "/month",
     featured: false,
     badge: null,
-    description: "Deeper human coaching combined with AI support — for serious personal growth.",
+    description: "Maximum voice access, priority with Danè and deeper coaching integration for serious growth.",
     features: [
-      "AI companion",
-      "Monthly human coaching session",
-      "Personal development focus",
-      "Ideal for serious growth",
+      "15 voice sessions per month (30 min/day)",
+      "Unlimited text conversations",
+      "Everything in Grow",
+      "Priority in Danè's calendar",
+      "Danè reviews shared conversations before sessions",
     ],
-    cta: "Request info",
-    href: "/#start",
+    cta: "Choose Business",
+    href: "/auth/signup",
   },
 ];
 
-const offerList = plans
-  .filter((p) => p.price !== "Free" && p.price !== "Custom")
-  .map((p) => ({
-    "@type": "Offer",
-    name: p.name,
+const offerList = plans.map((p) => ({
+  "@type": "Offer",
+  name: p.name,
+  priceCurrency: "ZAR",
+  price: p.price.replace("R", ""),
+  priceSpecification: {
+    "@type": "UnitPriceSpecification",
     priceCurrency: "ZAR",
     price: p.price.replace("R", ""),
-    priceSpecification: {
-      "@type": "UnitPriceSpecification",
-      priceCurrency: "ZAR",
-      price: p.price.replace("R", ""),
-      billingDuration: "P1M",
-    },
-    description: p.description,
-    url: "https://companionai.coach/pricing",
-  }));
+    billingDuration: "P1M",
+  },
+  description: p.description,
+  url: "https://companionai.coach/pricing",
+}));
 
 const productSchema = {
   "@context": "https://schema.org",
@@ -132,24 +115,34 @@ const pricingFaqs: FAQItem[] = [
       "Yes — all prices listed are in ZAR (South African Rand). The platform is available globally; billing in other currencies will be clarified at launch.",
   },
   {
-    question: "What happens after the free trial?",
+    question: "Why is the free voice session only 3 minutes?",
     answer:
-      "The Start plan is permanently free with limited access. To continue with full companion access and guided journeys, you can upgrade to Explorer or Grow.",
+      "The 3-minute limit exists so that everyone can experience a real voice conversation with the companion without needing a card. It's enough time to feel how the coaching dynamic works. Grow and Business plans extend this to 20 or 30 minutes per day with multiple sessions per month.",
   },
   {
-    question: "What is the welcome check-in?",
+    question: "What happens when I hit my voice or text limit?",
     answer:
-      "The 10-minute welcome check-in is a brief human call with Danè — available on the Start and Grow plans. It helps you get oriented, set an initial intention and understand how to make the most of your journey.",
+      "The companion shows you a friendly message explaining your limit and when it resets. Voice limits reset daily at midnight; monthly text and session counts reset on the first of each month. You can upgrade any time from your portal to get more access immediately.",
+  },
+  {
+    question: "How does 'Share conversations with Danè' work?",
+    answer:
+      "On Grow and Business plans, you can mark any text or voice conversation as shared. Danè can then read the transcript and any summary before your check-in, so your session time is spent going deeper rather than catching up. You choose what to share — nothing is visible to Danè unless you explicitly share it.",
+  },
+  {
+    question: "What does Danè see, and what stays private?",
+    answer:
+      "By default, all your conversations are private to you. Danè only sees conversations you have explicitly shared, your ratings and colour tags (if you add them), and any notes you choose to include. Journal entries are always private and are never shared.",
+  },
+  {
+    question: "What is the monthly check-in with Danè?",
+    answer:
+      "Grow and Business members get a monthly video or audio check-in with Danè — a focused 15–20 minute session to review your progress, adjust your focus and set intentions for the month ahead. Danè may review your shared conversations beforehand so the time is spent going deeper.",
   },
   {
     question: "Is there a team or company plan?",
     answer:
-      "Yes. The Voice tier can be adapted for teams and companies. Contact us to discuss a package tailored to your organisation's needs.",
-  },
-  {
-    question: "What does 'priority early access' mean?",
-    answer:
-      "During the launch phase, access is being rolled out gradually. Grow plan members get priority placement in the queue and first access to new features.",
+      "The Business plan works well for individuals with high coaching needs. For team packages or bespoke arrangements, contact us to discuss what would work best for your organisation.",
   },
 ];
 
@@ -175,7 +168,7 @@ export default function PricingPage() {
           include AI companion access and are available online.
         </p>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
           {plans.map((plan) => (
             <div
               key={plan.name}
@@ -253,12 +246,12 @@ export default function PricingPage() {
 
       <CTASection
         heading="Not sure which plan is right for you?"
-        body="Start with the free plan and experience the companion for yourself. You can upgrade whenever you're ready."
+        body="Start with the free plan and experience the companion for yourself. You can upgrade whenever you're ready — no card required to begin."
         primaryLabel="Start free"
-        primaryHref="/#start"
+        primaryHref="/auth/signup"
         secondaryLabel="Contact us"
         secondaryHref="/contact"
-        microcopy="Limited early-access welcome check-ins available."
+        microcopy="Free plan includes 1 voice session per day and 5 text conversations per month."
       />
       <Footer />
     </>
