@@ -7,8 +7,8 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
   const [profileRes, convsRes, bookingsRes, hwRes, notesRes] = await Promise.allSettled([
     supabase.from('profiles').select('*').eq('id', params.id).single(),
-    supabase.from('conversations').select('id, title, created_at, conversation_ratings(rating, color_tag)').eq('user_id', params.id).order('created_at', { ascending: false }).limit(20),
-    supabase.from('bookings').select('id, scheduled_at, session_type, status').eq('user_id', params.id).order('scheduled_at', { ascending: false }).limit(10),
+    supabase.from('conversations').select('id, title, created_at, conversation_ratings(rating, color_tag)').eq('user_id', params.id).eq('shared_with_coach', true).order('created_at', { ascending: false }).limit(20),
+    supabase.from('bookings').select('id, scheduled_at, title, status').eq('user_id', params.id).order('scheduled_at', { ascending: false }).limit(10),
     supabase.from('homework').select('id, title, status, due_date').eq('user_id', params.id).order('created_at', { ascending: false }).limit(10),
     supabase.from('admin_client_notes').select('id, body, created_at').eq('client_id', params.id).order('created_at', { ascending: false }),
   ])
@@ -21,7 +21,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const homework = hwRes.status === 'fulfilled' ? (hwRes.value.data ?? []) : []
   const notes = notesRes.status === 'fulfilled' ? (notesRes.value.data ?? []) : []
 
-  const displayName = profile.first_name ? `${profile.first_name} ${profile.last_name ?? ''}`.trim() : profile.email ?? params.id
+  const displayName = profile.full_name ?? profile.email ?? params.id
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
