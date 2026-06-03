@@ -89,6 +89,30 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
+    // ── Secondary text-limit guard ─────────────────────────────────────────
+    // Primary enforcement is in conversations/route.ts POST (creation).
+    // This guards against edge-cases where limit state has drifted.
+    const { data: limitProfile } = await supabase
+      .from('profiles')
+      .select('plan, conversations_limit_monthly, conversations_used_this_month')
+      .eq('id', user.id)
+      .single()
+
+    const convLimit = limitProfile?.conversations_limit_monthly as number | null
+    const convUsed  = (limitProfile?.conversations_used_this_month as number) ?? 0
+
+    if (convLimit != null && convUsed > convLimit) {
+      return NextResponse.json(
+        {
+          error: limitProfile?.plan === 'free'
+            ? "You've had 5 great conversations this month. Upgrade to Growth for unlimited conversations."
+            : 'Monthly conversation limit reached.',
+          code: 'CONVERSATION_LIMIT_REACHED',
+        },
+        { status: 403 }
+      )
+    }
+
     const { conversation_id, content } = await req.json() as { conversation_id?: string; content?: string }
     if (!conversation_id || !content?.trim()) {
       return NextResponse.json({ error: 'conversation_id and content required' }, { status: 400 })
