@@ -19,14 +19,22 @@ export default function LoginPage() {
     setError('')
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
       setError(authError.message)
       setLoading(false)
       return
     }
-    router.push('/portal')
+
+    // Check if user is an admin
+    const { data: adminRole } = await supabase
+      .from('admin_roles')
+      .select('user_id')
+      .eq('user_id', data.user.id)
+      .single()
+
+    router.push(adminRole ? '/admin' : '/portal')
     router.refresh()
   }
 
@@ -90,7 +98,7 @@ export default function LoginPage() {
               className="w-full font-inter font-semibold text-sm text-white py-3.5 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
             >
               {loading ? (
-                <><svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>Signing in…</>
+                <><svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>Signing in...</>
               ) : 'Sign in'}
             </button>
           </form>

@@ -9,6 +9,7 @@ interface Conversation {
   id: string
   title: string | null
   created_at: string
+  shared_with_coach: boolean
   conversation_ratings?: { rating: number | null; color_tag: ColorTag; notes: string | null }[]
 }
 
@@ -50,21 +51,24 @@ export default function ConversationsPage() {
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const [activeTab, setActiveTab] = useState<'summary' | 'rating' | 'notes'>('summary')
+  const [activeTab, setActiveTab] = useState<'summary' | 'rating' | 'notes' | 'privacy'>('summary')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [colorTag, setColorTag] = useState<ColorTag>(null)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [savedFeedback, setSavedFeedback] = useState<string | null>(null)
+  const [sharedWithCoach, setSharedWithCoach] = useState(false)
+  const [savingPrivacy, setSavingPrivacy] = useState(false)
 
   const load = useCallback(async () => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
     const { data: convData } = await supabase
       .from('conversations')
-      .select('id, title, created_at')
+      .select('id, title, created_at, shared_with_coach')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -79,14 +83,17 @@ export default function ConversationsPage() {
 
     const convs: Conversation[] = (convData ?? []).map(c => ({
       ...c,
+      shared_with_coach: c.shared_with_coach ?? false,
       conversation_ratings: ratingsMap[c.id] ? [ratingsMap[c.id]] : [],
     }))
+
     setConversations(convs)
-    // Refresh selected if open
+
     if (selected) {
       const refreshed = convs.find(c => c.id === selected.id)
       if (refreshed) {
         setSelected(refreshed)
+        setSharedWithCoach(refreshed.shared_with_coach)
         const r = refreshed.conversation_ratings?.[0]
         setRating(r?.rating ?? 0)
         setColorTag(r?.color_tag ?? null)
@@ -119,6 +126,7 @@ export default function ConversationsPage() {
     setHoverRating(0)
     setColorTag(r?.color_tag ?? null)
     setNotes(r?.notes ?? '')
+    setSharedWithCoach(conv.shared_with_coach)
     setActiveTab('summary')
     setSavedFeedback(null)
     loadSummary(conv.id)
@@ -158,6 +166,22 @@ export default function ConversationsPage() {
     setTimeout(() => setSavedFeedback(null), 3000)
   }
 
+  async function toggleSharing(newValue: boolean) {
+    if (!selected) return
+    setSavingPrivacy(true)
+    const supabase = createClient()
+    await supabase
+      .from('conversations')
+      .update({ shared_with_coach: newValue })
+      .eq('id', selected.id)
+    setSharedWithCoach(newValue)
+    setSelected(prev => prev ? { ...prev, shared_with_coach: newValue } : prev)
+    await load()
+    setSavingPrivacy(false)
+    setSavedFeedback(newValue ? 'Shared with Danè!' : 'Conversation is now private.')
+    setTimeout(() => setSavedFeedback(null), 3000)
+  }
+
   return (
     <div className="flex h-full">
       {/* Sidebar */}
@@ -191,11 +215,16 @@ export default function ConversationsPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-inter font-medium text-ink text-sm truncate">{conv.title ?? 'Conversation'}</p>
-                  {tag && (
-                    <span className={`font-inter text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${TAG_STYLES[tag]}`}>
-                      {TAG_LABELS[tag]}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {conv.shared_with_coach && (
+                      <span className="font-inter text-[10px] px-2 py-0.5 rounded-full bg-plum/10 text-plum">Shared</span>
+                    )}
+                    {tag && (
+                      <span className={`font-inter text-[10px] px-2 py-0.5 rounded-full ${TAG_STYLES[tag]}`}>
+                        {TAG_LABELS[tag]}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="font-inter text-xs text-muted">{new Date(conv.created_at).toLocaleDateString('en-ZA')}</p>
@@ -215,7 +244,16 @@ export default function ConversationsPage() {
           </div>
         ) : (
           <div className="p-6 max-w-2xl">
-            <h2 className="font-poppins font-bold text-plum-dark text-xl mb-1" style={{ letterSpacing: '-0.03em' }}>{selected.title ?? 'Conversation'}</h2>
+            <div className="flex items-start justify-between mb-1">
+              <h2 className="font-poppins font-bold text-plum-dark text-xl" style={{ letterSpacing: '-0.03em' }}>
+                {selected.title ?? 'Conversation'}
+              </h2>
+              <span className={`font-inter text-xs px-2.5 py-1 rounded-full flex-shrink-0 ml-3 mt-1 ${
+                sharedWithCoach ? 'bg-plum/10 text-plum' : 'bg-mist text-muted'
+              }`}>
+                {sharedWithCoach ? '👁 Shared with Danè' : '🔒 Private'}
+              </span>
+            </div>
             <p className="font-inter text-xs text-muted mb-5">{new Date(selected.created_at).toLocaleString('en-ZA')}</p>
 
             {savedFeedback && (
@@ -225,10 +263,10 @@ export default function ConversationsPage() {
             )}
 
             <div className="flex gap-1 bg-mist rounded-2xl p-1 mb-5 w-fit">
-              {(['summary', 'rating', 'notes'] as const).map(tab => (
+              {(['summary', 'rating', 'notes', 'privacy'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={`font-inter text-sm px-4 py-1.5 rounded-xl capitalize transition-colors ${activeTab === tab ? 'bg-white text-plum-dark font-semibold shadow-card' : 'text-muted'}`}>
-                  {tab}
+                  {tab === 'privacy' ? '🔒 Privacy' : tab}
                 </button>
               ))}
             </div>
@@ -315,6 +353,73 @@ export default function ConversationsPage() {
                   className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft disabled:opacity-60 w-fit">
                   {saving ? 'Saving...' : 'Save notes'}
                 </button>
+              </div>
+            )}
+
+            {activeTab === 'privacy' && (
+              <div className="bg-white rounded-3xl p-5 border border-line flex flex-col gap-5">
+                {/* Current status */}
+                <div className={`rounded-2xl px-4 py-3 flex items-center gap-3 ${
+                  sharedWithCoach ? 'bg-plum/5 border border-plum/20' : 'bg-mist border border-line'
+                }`}>
+                  <span className="text-xl">{sharedWithCoach ? '👁' : '🔒'}</span>
+                  <div>
+                    <p className="font-inter font-semibold text-ink text-sm">
+                      {sharedWithCoach ? 'Shared with Danè' : 'Private — only you can see this'}
+                    </p>
+                    <p className="font-inter text-xs text-muted mt-0.5">
+                      {sharedWithCoach
+                        ? 'Danè can see the summary and transcript of this conversation.'
+                        : 'Danè cannot see this conversation. Your thoughts are yours alone.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Toggle */}
+                {sharedWithCoach ? (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => toggleSharing(false)}
+                      disabled={savingPrivacy}
+                      className="font-inter font-semibold text-sm text-plum border-2 border-plum px-5 py-2.5 rounded-full hover:bg-plum/5 transition-colors disabled:opacity-60 w-fit"
+                    >
+                      {savingPrivacy ? 'Saving...' : '🔒 Make private'}
+                    </button>
+                    <p className="font-inter text-xs text-muted">
+                      Danè will no longer be able to see this conversation.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => toggleSharing(true)}
+                      disabled={savingPrivacy}
+                      className="font-inter font-semibold text-sm text-white bg-plum px-5 py-2.5 rounded-full hover:bg-plum-dark transition-colors shadow-soft disabled:opacity-60 w-fit"
+                    >
+                      {savingPrivacy ? 'Saving...' : '👁 Share with Danè'}
+                    </button>
+                    <p className="font-inter text-xs text-muted">
+                      Sharing gives Danè access to the summary and transcript so she can support you better in your next session.
+                    </p>
+                  </div>
+                )}
+
+                {/* Info box */}
+                <div className="bg-mist rounded-2xl px-4 py-3 border border-line">
+                  <p className="font-inter font-semibold text-xs text-plum-dark mb-1">How privacy works</p>
+                  <ul className="flex flex-col gap-1">
+                    {[
+                      'All conversations are private by default.',
+                      'Only you can choose to share a conversation with Danè.',
+                      'You can make a shared conversation private again at any time.',
+                      'Danè will never access your conversations without your permission.',
+                    ].map((item, i) => (
+                      <li key={i} className="font-inter text-xs text-muted flex gap-2">
+                        <span className="text-plum flex-shrink-0">·</span>{item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
           </div>
