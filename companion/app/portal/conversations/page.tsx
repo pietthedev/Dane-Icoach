@@ -9,8 +9,19 @@ interface Conversation {
   id: string
   title: string | null
   created_at: string
+  mode: string | null
+  started_at: string | null
+  ended_at: string | null
+  elevenlabs_conversation_id: string | null
   shared_with_coach: boolean
   conversation_ratings?: { rating: number | null; color_tag: ColorTag; notes: string | null }[]
+}
+
+interface AudioData {
+  audio_url: string | null
+  expires_at: string | null
+  duration_secs: number | null
+  cost_credits: number | null
 }
 
 interface Summary {
@@ -62,6 +73,9 @@ export default function ConversationsPage() {
   const [savedFeedback, setSavedFeedback] = useState<string | null>(null)
   const [sharedWithCoach, setSharedWithCoach] = useState(false)
   const [savingPrivacy, setSavingPrivacy] = useState(false)
+  // Audio recording
+  const [audioData, setAudioData] = useState<AudioData | null>(null)
+  const [loadingAudio, setLoadingAudio] = useState(false)
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -70,7 +84,7 @@ export default function ConversationsPage() {
 
     const { data: convData } = await supabase
       .from('conversations')
-      .select('id, title, created_at, shared_with_coach')
+      .select('id, title, created_at, mode, started_at, ended_at, elevenlabs_conversation_id, shared_with_coach')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -131,7 +145,17 @@ export default function ConversationsPage() {
     setSharedWithCoach(conv.shared_with_coach)
     setActiveTab('summary')
     setSavedFeedback(null)
+    setAudioData(null)
     loadSummary(conv.id)
+    // Fetch audio data for voice conversations with an ElevenLabs ID
+    if (conv.elevenlabs_conversation_id) {
+      setLoadingAudio(true)
+      fetch(`/api/portal/conversation-audio?conversation_id=${conv.id}`)
+        .then(r => r.json())
+        .then((d: AudioData) => setAudioData(d))
+        .catch(() => setAudioData(null))
+        .finally(() => setLoadingAudio(false))
+    }
     setMobileView('detail') // on mobile: switch to detail panel
   }
 
@@ -282,38 +306,107 @@ export default function ConversationsPage() {
             </div>
 
             {activeTab === 'summary' && (
-              <div className="bg-white rounded-3xl p-5 border border-line">
-                {loadingSummary ? (
-                  <p className="font-inter text-muted text-sm">Loading summary...</p>
-                ) : summary ? (
-                  <div className="flex flex-col gap-4">
-                    <p className="font-inter text-sm text-ink leading-relaxed">{summary.summary}</p>
-                    {summary.key_topics?.length > 0 && (
-                      <div>
-                        <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">Key topics</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {summary.key_topics.map((t, i) => (
-                            <span key={i} className="font-inter text-xs px-2.5 py-1 rounded-full bg-plum/10 text-plum">{t}</span>
-                          ))}
+              <div className="flex flex-col gap-4">
+
+                {/* ── Session metadata ── */}
+                {(selected.mode === 'voice' || selected.elevenlabs_conversation_id) && (
+                  <div className="bg-mist rounded-2xl px-4 py-3 flex flex-wrap gap-x-5 gap-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-inter text-[10px] text-muted uppercase tracking-wide">Mode</span>
+                      <span className="font-inter text-xs text-ink font-semibold capitalize">🎙️ Voice</span>
+                    </div>
+                    {selected.started_at && selected.ended_at && (() => {
+                      const secs = Math.round(
+                        (new Date(selected.ended_at).getTime() - new Date(selected.started_at).getTime()) / 1000
+                      )
+                      const m = Math.floor(secs / 60)
+                      const s = secs % 60
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-inter text-[10px] text-muted uppercase tracking-wide">Duration</span>
+                          <span className="font-inter text-xs text-ink font-semibold">
+                            {m > 0 ? `${m}m ` : ''}{s}s
+                          </span>
                         </div>
-                      </div>
-                    )}
-                    {summary.action_items?.length > 0 && (
-                      <div>
-                        <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">Action items</p>
-                        <ul className="flex flex-col gap-1.5">
-                          {summary.action_items.map((a, i) => (
-                            <li key={i} className="font-inter text-sm text-ink flex gap-2">
-                              <span className="text-plum mt-0.5">→</span>{a}
-                            </li>
-                          ))}
-                        </ul>
+                      )
+                    })()}
+                    {audioData?.cost_credits != null && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-inter text-[10px] text-muted uppercase tracking-wide">Credits</span>
+                        <span className="font-inter text-xs text-ink font-semibold">{audioData.cost_credits}</span>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p className="font-inter text-muted text-sm">No summary available for this conversation yet.</p>
                 )}
+
+                {/* ── Audio player ── */}
+                {selected.elevenlabs_conversation_id && (
+                  <div className="bg-white rounded-2xl border border-line p-4">
+                    <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">
+                      🎙️ Voice recording
+                    </p>
+                    {loadingAudio ? (
+                      <p className="font-inter text-xs text-muted">Loading recording…</p>
+                    ) : audioData?.audio_url ? (
+                      <div className="flex flex-col gap-1.5">
+                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                        <audio
+                          controls
+                          src={audioData.audio_url}
+                          className="w-full h-10"
+                          style={{ borderRadius: '12px' }}
+                        />
+                        {audioData.expires_at && (
+                          <p className="font-inter text-[10px] text-muted">
+                            Available until{' '}
+                            {new Date(audioData.expires_at).toLocaleDateString('en-ZA', {
+                              day: 'numeric', month: 'short', year: 'numeric',
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="font-inter text-xs text-muted">
+                        Recording not available — it may have expired or is still processing.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Summary ── */}
+                <div className="bg-white rounded-3xl p-5 border border-line">
+                  {loadingSummary ? (
+                    <p className="font-inter text-muted text-sm">Loading summary…</p>
+                  ) : summary ? (
+                    <div className="flex flex-col gap-4">
+                      <p className="font-inter text-sm text-ink leading-relaxed">{summary.summary}</p>
+                      {summary.key_topics?.length > 0 && (
+                        <div>
+                          <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">Key topics</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {summary.key_topics.map((t, i) => (
+                              <span key={i} className="font-inter text-xs px-2.5 py-1 rounded-full bg-plum/10 text-plum">{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {summary.action_items?.length > 0 && (
+                        <div>
+                          <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">Action items</p>
+                          <ul className="flex flex-col gap-1.5">
+                            {summary.action_items.map((a, i) => (
+                              <li key={i} className="font-inter text-sm text-ink flex gap-2">
+                                <span className="text-plum mt-0.5">→</span>{a}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="font-inter text-muted text-sm">No summary available for this conversation yet.</p>
+                  )}
+                </div>
               </div>
             )}
 
