@@ -51,9 +51,29 @@ export default async function PortalHomePage() {
     <div className="p-6 max-w-5xl mx-auto">
 
       {/* Greeting */}
-      <h1 className="font-poppins font-bold text-plum-dark text-2xl mb-6" style={{ letterSpacing: '-0.04em' }}>
+      <h1 className="font-poppins font-bold text-plum-dark text-2xl mb-4" style={{ letterSpacing: '-0.04em' }}>
         Welcome back, {firstName} 👋
       </h1>
+
+      {/* ── Voice CTA — hero card, first thing you see ── */}
+      <a
+        href="/portal/voice"
+        className="group flex items-center justify-between gap-4 rounded-3xl p-5 md:p-6 mb-5 text-white no-underline transition-all hover:scale-[1.01] active:scale-[0.99]"
+        style={{ background: 'linear-gradient(135deg, #2E1A47 0%, #6B3FA0 60%, #FF6F9F 140%)' }}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="font-inter text-[10px] uppercase tracking-widest opacity-60 mb-1">Voice session</p>
+          <p className="font-poppins font-bold text-xl md:text-2xl leading-tight mb-1" style={{ letterSpacing: '-0.03em' }}>
+            Got a few minutes?<br className="hidden sm:block" /> Talk it through.
+          </p>
+          <p className="font-inter text-sm opacity-75 leading-snug">
+            Running to a meeting, processing something big, or just need to think out loud.
+          </p>
+        </div>
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/15 group-hover:bg-white/25 transition-colors flex items-center justify-center flex-shrink-0 shadow-soft">
+          <span className="text-3xl md:text-4xl" aria-hidden="true">🎙️</span>
+        </div>
+      </a>
 
       {/* Quote */}
       {quote && (

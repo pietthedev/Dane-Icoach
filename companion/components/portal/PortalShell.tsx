@@ -167,7 +167,7 @@ export default function PortalShell({ user, profile, children }: PortalShellProp
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 bg-white border-b border-line flex items-center px-5 gap-4 flex-shrink-0">
+        <header className="h-16 bg-white border-b border-line flex items-center px-5 gap-3 flex-shrink-0">
           <button
             className="md:hidden p-1.5 rounded-lg hover:bg-mist transition-colors"
             onClick={() => setSidebarOpen(true)}
@@ -178,14 +178,25 @@ export default function PortalShell({ user, profile, children }: PortalShellProp
             </svg>
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* ── Persistent voice button — one tap from anywhere ── */}
+            <Link
+              href="/portal/voice"
+              className="flex items-center gap-1.5 font-inter font-semibold text-xs text-white px-3.5 py-2 rounded-full transition-all shadow-soft hover:scale-105 active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #2E1A47, #6B3FA0)' }}
+              title="Start a voice session"
+            >
+              <span aria-hidden="true">🎙️</span>
+              <span className="hidden sm:inline">Talk</span>
+            </Link>
+
             {plan === 'free' || plan === 'start' ? (
               <Link href="/portal/billing"
-                className="font-inter font-semibold text-xs text-white px-3 py-1.5 rounded-full bg-plum hover:bg-plum-dark transition-colors">
-                Start plan
+                className="font-inter font-semibold text-xs text-plum border border-plum/30 px-3 py-1.5 rounded-full hover:bg-plum/5 transition-colors hidden sm:block">
+                Upgrade
               </Link>
             ) : (
-              <span className={`font-inter font-semibold text-xs px-2.5 py-1 rounded-full ${planClass}`}>{planLabel} plan</span>
+              <span className={`font-inter font-semibold text-xs px-2.5 py-1 rounded-full hidden sm:inline-block ${planClass}`}>{planLabel}</span>
             )}
             <div className="w-8 h-8 rounded-full bg-plum flex items-center justify-center">
               {profile?.avatar_url
@@ -193,7 +204,7 @@ export default function PortalShell({ user, profile, children }: PortalShellProp
                 : <span className="font-poppins font-bold text-white text-xs">{initials}</span>
               }
             </div>
-            <span className="font-inter text-sm text-ink font-medium hidden sm:block">{displayName}</span>
+            <span className="font-inter text-sm text-ink font-medium hidden md:block">{displayName}</span>
           </div>
         </header>
 
