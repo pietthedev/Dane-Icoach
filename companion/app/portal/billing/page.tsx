@@ -157,10 +157,10 @@ export default async function BillingPage({
         </div>
 
         {/* Usage meters */}
-        {isPaid && (
+        {isPaid && profile && (
           <div className="flex flex-col gap-3 pt-4 border-t border-mist">
             <p className="font-inter text-xs text-muted uppercase tracking-wide">Usage this month</p>
-            {profile?.conversations_limit_monthly != null ? (
+            {profile.conversations_limit_monthly != null ? (
               <UsageBar
                 used={profile.conversations_used_this_month ?? 0}
                 total={profile.conversations_limit_monthly}
@@ -169,7 +169,7 @@ export default async function BillingPage({
             ) : (
               <p className="font-inter text-sm text-green-700 font-semibold">✓ Unlimited conversations</p>
             )}
-            {profile?.voice_sessions_limit_monthly != null && (
+            {profile.voice_sessions_limit_monthly != null && (
               <UsageBar
                 used={profile.voice_sessions_used_this_month ?? 0}
                 total={profile.voice_sessions_limit_monthly}

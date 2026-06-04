@@ -60,20 +60,16 @@ export async function POST(req: NextRequest) {
 
       // Prefer user_id from metadata (set by our subscribe route); fall back to email lookup
       let userId: string | null = metadata.user_id ?? null
-      let userPlan: string      = metadata.plan ?? 'grow'
-      let userFullName: string  = 'there'
+      const userPlan: string    = metadata.plan ?? 'grow'
 
       if (!userId && customer.email) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, full_name, plan')
-          .eq('id', supabase.from('profiles').select('id').filter('email', 'eq', customer.email))
-          .maybeSingle()
-
-        // Simpler: use auth.users email match via service client
+        // Look up user by email via the admin API — avoids any RLS issues
         const { data: authUsers } = await supabase.auth.admin.listUsers()
         const match = authUsers?.users?.find(u => u.email === customer.email)
-        if (match) userId = match.id
+        if (match) {
+          userId = match.id
+          console.log(`[paystack webhook] charge.success: resolved user by email: ${userId}`)
+        }
       }
 
       if (!userId) {
