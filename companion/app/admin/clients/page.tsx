@@ -48,7 +48,56 @@ export default async function ClientsListPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-3xl border border-line shadow-card overflow-hidden">
+      {/* ── Mobile card list (< md) ─────────────────────────────────────── */}
+      <div className="md:hidden flex flex-col gap-3">
+        {!clients || clients.length === 0 ? (
+          <p className="font-inter text-sm text-muted text-center py-12">No clients yet.</p>
+        ) : (
+          clients.map((c: ClientRow) => (
+            <div key={c.id} className="bg-white rounded-3xl p-4 border border-line shadow-card">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <p className="font-inter font-semibold text-ink text-sm truncate">{c.full_name ?? '—'}</p>
+                  <p className="font-inter text-xs text-muted mt-0.5">
+                    Joined {c.member_since ? new Date(c.member_since).toLocaleDateString('en-ZA') : '—'}
+                  </p>
+                </div>
+                <span className="font-inter text-xs px-2.5 py-1 rounded-full bg-mist text-plum font-semibold capitalize flex-shrink-0">
+                  {c.plan ?? 'start'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-center">
+                    <p className="font-inter font-bold text-ink text-sm tabular-nums">{c.total_conversations ?? 0}</p>
+                    <p className="font-inter text-[10px] text-muted">sessions</p>
+                  </div>
+                  <div>
+                    {c.avg_rating != null ? (
+                      <p className="font-inter text-sm text-yellow-500">
+                        {'★'.repeat(Math.round(c.avg_rating))}{'☆'.repeat(5 - Math.round(c.avg_rating))}
+                      </p>
+                    ) : (
+                      <p className="font-inter text-sm text-muted">—</p>
+                    )}
+                    <p className="font-inter text-[10px] text-muted">rating</p>
+                  </div>
+                  <StatusBadge status={c.subscription_status} />
+                </div>
+                <Link
+                  href={`/admin/clients/${c.id}`}
+                  className="font-inter text-xs font-semibold text-white bg-plum hover:bg-plum-dark px-4 py-2 rounded-full transition-colors flex-shrink-0 min-h-[44px] flex items-center"
+                >
+                  View →
+                </Link>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── Desktop table (md+) ──────────────────────────────────────────── */}
+      <div className="hidden md:block bg-white rounded-3xl border border-line shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -72,31 +121,22 @@ export default async function ClientsListPage() {
               ) : (
                 clients.map((c: ClientRow) => (
                   <tr key={c.id} className="border-b border-mist last:border-0 hover:bg-mist/40 transition-colors">
-                    {/* Client */}
                     <td className="px-5 py-3.5">
                       <p className="font-inter font-medium text-ink text-sm">{c.full_name ?? '—'}</p>
                     </td>
-
-                    {/* Plan */}
                     <td className="px-4 py-3.5">
                       <span className="font-inter text-xs px-2.5 py-1 rounded-full bg-mist text-plum font-semibold capitalize">
                         {c.plan ?? 'start'}
                       </span>
                     </td>
-
-                    {/* Joined */}
                     <td className="px-4 py-3.5">
                       <p className="font-inter text-sm text-muted">
                         {c.member_since ? new Date(c.member_since).toLocaleDateString('en-ZA') : '—'}
                       </p>
                     </td>
-
-                    {/* Sessions */}
                     <td className="px-4 py-3.5 text-right">
                       <p className="font-inter text-sm text-ink tabular-nums">{c.total_conversations ?? 0}</p>
                     </td>
-
-                    {/* Avg rating */}
                     <td className="px-4 py-3.5 text-right">
                       {c.avg_rating != null ? (
                         <span className="font-inter text-sm text-ink tabular-nums">
@@ -107,13 +147,9 @@ export default async function ClientsListPage() {
                         <span className="font-inter text-sm text-muted">—</span>
                       )}
                     </td>
-
-                    {/* Status */}
                     <td className="px-4 py-3.5">
                       <StatusBadge status={c.subscription_status} />
                     </td>
-
-                    {/* View link */}
                     <td className="px-5 py-3.5 text-right">
                       <Link
                         href={`/admin/clients/${c.id}`}

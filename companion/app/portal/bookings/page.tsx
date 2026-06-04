@@ -35,14 +35,14 @@ export default async function BookingsPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <h1 className="font-poppins font-bold text-plum-dark text-2xl" style={{ letterSpacing: '-0.04em' }}>Bookings</h1>
-          <p className="font-inter text-muted text-sm mt-1">Your upcoming and past sessions with DanÃ¨</p>
+          <p className="font-inter text-muted text-sm mt-1">Your upcoming and past sessions with Danè</p>
         </div>
         {calendlyUrl && (
           <a href={calendlyUrl} target="_blank" rel="noopener noreferrer"
-            className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft">
+            className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft flex-shrink-0 min-h-[44px] flex items-center">
             + Book a session
           </a>
         )}

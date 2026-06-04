@@ -24,6 +24,8 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const [starting, setStarting] = useState(false)
   const [loadingMessages, setLoadingMessages] = useState(false)
+  // Mobile: show the conversation list ('list') or the active chat ('chat')
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const firstMessageSent = useRef(false)
@@ -74,6 +76,7 @@ export default function ChatPage() {
         content: "Hey, I'm here. What's on your mind today?",
       }])
       await loadConversations()
+      setMobileView('chat') // on mobile: switch to chat view
     }
     setStarting(false)
     setTimeout(() => textareaRef.current?.focus(), 100)
@@ -83,6 +86,7 @@ export default function ChatPage() {
     setSelectedId(id)
     firstMessageSent.current = true // existing convo, skip title update
     await loadMessages(id)
+    setMobileView('chat') // on mobile: switch to chat view
   }
 
   async function updateTitle(conversationId: string, firstMessage: string) {
@@ -133,8 +137,8 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full">
-      {/* Sidebar */}
-      <div className="w-72 flex-shrink-0 border-r border-line flex flex-col bg-white">
+      {/* Sidebar — hidden on mobile when chat is open */}
+      <div className={`${mobileView === 'chat' ? 'hidden' : 'flex'} md:flex w-full md:w-72 flex-shrink-0 border-r border-line flex-col bg-white`}>
         <div className="p-4 border-b border-line">
           <h1 className="font-poppins font-bold text-plum-dark text-lg mb-3" style={{ letterSpacing: '-0.03em' }}>
             Text chat
@@ -168,8 +172,8 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Chat area — hidden on mobile when list is shown */}
+      <div className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'} flex-1 flex-col min-h-0`}>
         {!selectedId ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
             <div className="w-16 h-16 rounded-full bg-plum/10 flex items-center justify-center text-3xl">💬</div>
@@ -191,6 +195,15 @@ export default function ChatPage() {
           </div>
         ) : (
           <>
+            {/* Mobile back button */}
+            <div className="md:hidden flex items-center gap-2 px-4 py-2 border-b border-line bg-white flex-shrink-0">
+              <button
+                className="flex items-center gap-1.5 text-plum font-inter font-semibold text-sm min-h-[44px]"
+                onClick={() => setMobileView('list')}
+              >
+                ← Conversations
+              </button>
+            </div>
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
               {loadingMessages && (
                 <p className="font-inter text-sm text-muted text-center mt-8">Loading...</p>

@@ -88,15 +88,15 @@ export default function JournalPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="font-poppins font-bold text-plum-dark text-2xl" style={{ letterSpacing: '-0.04em' }}>Journal &amp; Goals</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <button onClick={() => { setShowGoalForm(!showGoalForm); setShowEntryForm(false) }}
-            className="font-inter font-semibold text-sm text-plum px-4 py-2 rounded-full border border-plum hover:bg-plum hover:text-white transition-colors">
+            className="font-inter font-semibold text-sm text-plum px-4 py-2.5 rounded-full border border-plum hover:bg-plum hover:text-white transition-colors min-h-[44px]">
             + Goal
           </button>
           <button onClick={() => { setShowEntryForm(!showEntryForm); setShowGoalForm(false) }}
-            className="font-inter font-semibold text-sm text-white px-4 py-2 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft">
+            className="font-inter font-semibold text-sm text-white px-4 py-2.5 rounded-full bg-plum hover:bg-plum-dark transition-colors shadow-soft min-h-[44px]">
             + New entry
           </button>
         </div>

@@ -81,10 +81,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const displayName = profile.full_name ?? profile.email ?? params.id
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-4 md:p-6 max-w-5xl mx-auto">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
         <div>
           <Link href="/admin/clients" className="font-inter text-xs text-muted hover:text-plum mb-2 block">
             ← All clients

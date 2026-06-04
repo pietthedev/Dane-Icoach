@@ -38,7 +38,7 @@ export default async function AdminDashboard() {
       <h1 className="font-poppins font-bold text-plum-dark text-2xl mb-6" style={{ letterSpacing: '-0.04em' }}>Dashboard</h1>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <Stat label="Total clients" value={String(totalClients)} />
         <Stat label="MRR" value={revenue ? `R${((revenue as Record<string, unknown>).mrr ?? 0)}` : '—'} accent />
         <Stat label="Revenue (month)" value={revenue ? `R${((revenue as Record<string, unknown>).month_revenue ?? 0)}` : '—'} />

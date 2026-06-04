@@ -52,6 +52,8 @@ export default function ConversationsPage() {
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'summary' | 'rating' | 'notes' | 'privacy'>('summary')
+  // Mobile: show the list ('list') or the detail panel ('detail')
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [colorTag, setColorTag] = useState<ColorTag>(null)
@@ -130,6 +132,7 @@ export default function ConversationsPage() {
     setActiveTab('summary')
     setSavedFeedback(null)
     loadSummary(conv.id)
+    setMobileView('detail') // on mobile: switch to detail panel
   }
 
   const filtered = conversations.filter(c => {
@@ -184,8 +187,8 @@ export default function ConversationsPage() {
 
   return (
     <div className="flex h-full">
-      {/* Sidebar */}
-      <div className="w-full md:w-80 flex-shrink-0 border-r border-line flex flex-col bg-white">
+      {/* Sidebar — hidden on mobile when detail is open */}
+      <div className={`${mobileView === 'detail' ? 'hidden' : 'flex'} md:flex w-full md:w-80 flex-shrink-0 border-r border-line flex-col bg-white`}>
         <div className="p-4 border-b border-line">
           <h1 className="font-poppins font-bold text-plum-dark text-lg mb-3" style={{ letterSpacing: '-0.03em' }}>Conversations</h1>
           <input
@@ -236,16 +239,23 @@ export default function ConversationsPage() {
         </div>
       </div>
 
-      {/* Detail panel */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Detail panel — hidden on mobile when list is shown */}
+      <div className={`${mobileView === 'list' ? 'hidden md:block' : 'block'} flex-1 overflow-y-auto`}>
         {!selected ? (
           <div className="flex items-center justify-center h-full">
             <p className="font-inter text-muted text-sm">Select a conversation to view details</p>
           </div>
         ) : (
-          <div className="p-6 max-w-2xl">
+          <div className="p-4 md:p-6 max-w-2xl">
+            {/* Back button — mobile only */}
+            <button
+              className="md:hidden flex items-center gap-1.5 text-plum font-inter font-semibold text-sm mb-4 min-h-[44px]"
+              onClick={() => setMobileView('list')}
+            >
+              ← Conversations
+            </button>
             <div className="flex items-start justify-between mb-1">
-              <h2 className="font-poppins font-bold text-plum-dark text-xl" style={{ letterSpacing: '-0.03em' }}>
+              <h2 className="font-poppins font-bold text-plum-dark text-lg md:text-xl" style={{ letterSpacing: '-0.03em' }}>
                 {selected.title ?? 'Conversation'}
               </h2>
               <span className={`font-inter text-xs px-2.5 py-1 rounded-full flex-shrink-0 ml-3 mt-1 ${
@@ -262,7 +272,7 @@ export default function ConversationsPage() {
               </p>
             )}
 
-            <div className="flex gap-1 bg-mist rounded-2xl p-1 mb-5 w-fit">
+            <div className="flex gap-1 bg-mist rounded-2xl p-1 mb-5 overflow-x-auto">
               {(['summary', 'rating', 'notes', 'privacy'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={`font-inter text-sm px-4 py-1.5 rounded-xl capitalize transition-colors ${activeTab === tab ? 'bg-white text-plum-dark font-semibold shadow-card' : 'text-muted'}`}>

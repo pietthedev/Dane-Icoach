@@ -141,8 +141,8 @@ export default function Hero() {
           style={{ borderRadius: "38px" }}
         >
           <div
-            className="relative overflow-hidden bg-white shadow-strong"
-            style={{ borderRadius: "38px", height: "515px" }}
+            className="relative overflow-hidden bg-white shadow-strong h-72 sm:h-96 md:h-[515px]"
+            style={{ borderRadius: "38px" }}
           >
             {/* Portrait */}
             <ImagePlaceholder
