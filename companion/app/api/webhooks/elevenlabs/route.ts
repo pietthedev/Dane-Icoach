@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
         conversation_id:  convId,
         user_id:          userId,
         role:             t.role === 'agent' ? 'assistant' : 'user',
-        content:          t.message,
+        content:          t.message.replace(/\[[\w\s]+\]/g, '').trim(),
         created_at:       new Date(
           ((metadata.start_time_unix_secs ?? 0) + (t.time_in_call_secs ?? i)) * 1000
         ).toISOString(),

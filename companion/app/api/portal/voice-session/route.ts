@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
       conversation_id: conv.id,
       user_id:         user.id,
       role:            m.role === 'agent' ? 'assistant' : 'user',
-      content:         m.content,
+      content:         m.content.replace(/\[[\w\s]+\]/g, '').trim(),
       created_at:      m.timestamp,
     }))
     const { error: msgError } = await supabase.from('messages').insert(messageRows)
