@@ -29,7 +29,12 @@
       "Bash(Write-Host \"Done\")",
       "PowerShell(Set-Location \"C:\\\\Users\\\\pdeklerk\\\\Downloads\\\\Dane ICoach\\\\companion\"; npm run build 2>&1 | Select-String -Pattern \"Export encountered|error|Error\" | Where-Object { $_ -notmatch \"prerender-error|icon|opengraph\" } | Select-Object -First 15)",
       "Bash(git commit *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(grep -r \"admin_client_notes\" scripts/ --include=\"*.sql\" -l)",
+      "Bash(grep -r \"admin_client_notes\" . --include=\"*.tsx\" --include=\"*.ts\" -l)",
+      "Bash(git ls-remote *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomUUID\\(\\)\\)\")"
     ]
   }
 }
