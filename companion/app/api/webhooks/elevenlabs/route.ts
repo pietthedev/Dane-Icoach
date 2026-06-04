@@ -46,17 +46,24 @@ interface ElevenLabsWebhookPayload {
 }
 
 export async function POST(req: NextRequest) {
+  // Log immediately — this is the first sign of life in Vercel logs
+  console.log('[elevenlabs-webhook] Received webhook')
+  console.log('[elevenlabs-webhook] Headers:', JSON.stringify(Object.fromEntries(req.headers.entries())))
+
   try {
-    // ── Verify HMAC-SHA256 signature ─────────────────────────────────────────
-    // ElevenLabs sends: ElevenLabs-Signature: t=<timestamp>,v0=<hmac-sha256>
-    // Signed string: "<timestamp>.<raw_body>"
+    // ── Read body first so it's available for both signature check and parsing
     const rawBody   = await req.text()
     const sigHeader = req.headers.get('ElevenLabs-Signature') ?? req.headers.get('elevenlabs-signature')
     const secret    = process.env.ELEVENLABS_WEBHOOK_SECRET
 
+    console.log(`[elevenlabs-webhook] sig header present=${!!sigHeader} secret set=${!!secret}`)
+
+    // ── Verify HMAC-SHA256 signature (only when secret is configured) ─────────
+    // ElevenLabs sends: ElevenLabs-Signature: t=<timestamp>,v0=<hmac-sha256>
+    // Signed string: "<timestamp>.<raw_body>"
     if (secret) {
       if (!sigHeader) {
-        console.warn('[elevenlabs webhook] Missing ElevenLabs-Signature header — rejecting')
+        console.warn('[elevenlabs-webhook] Missing ElevenLabs-Signature header — rejecting')
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
@@ -66,14 +73,14 @@ export async function POST(req: NextRequest) {
       const v0        = parts['v0']
 
       if (!timestamp || !v0) {
-        console.warn('[elevenlabs webhook] Malformed signature header — rejecting')
+        console.warn('[elevenlabs-webhook] Malformed signature header — rejecting', { sigHeader })
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
       // Reject stale webhooks (> 5 minutes old)
       const ageSeconds = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10)
       if (ageSeconds > 300) {
-        console.warn(`[elevenlabs webhook] Stale webhook (${ageSeconds}s old) — rejecting`)
+        console.warn(`[elevenlabs-webhook] Stale webhook (${ageSeconds}s old) — rejecting`)
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
 
@@ -83,9 +90,13 @@ export async function POST(req: NextRequest) {
         .digest('hex')
 
       if (!crypto.timingSafeEqual(Buffer.from(v0, 'hex'), Buffer.from(expected, 'hex'))) {
-        console.warn('[elevenlabs webhook] Invalid signature — rejecting')
+        console.warn('[elevenlabs-webhook] Invalid signature — rejecting')
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
+
+      console.log('[elevenlabs-webhook] Signature verified ✓')
+    } else {
+      console.log('[elevenlabs-webhook] No secret configured — skipping signature check')
     }
 
     const payload = JSON.parse(rawBody) as ElevenLabsWebhookPayload
@@ -186,7 +197,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
 
   } catch (err) {
-    console.error('[elevenlabs webhook] Error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Log fully but always return 200 — ElevenLabs will retry on non-2xx
+    console.error('[elevenlabs-webhook] Uncaught error:', err)
+    return NextResponse.json({ received: true, error: String(err) })
   }
 }

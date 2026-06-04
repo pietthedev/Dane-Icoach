@@ -65,6 +65,7 @@ async function fetchElevenLabsSummary(elevenLabsConvId: string): Promise<{
 }
 
 // ── Gemini fallback summary ───────────────────────────────────────────────────
+// Returns plain text — no JSON parsing, eliminates truncation errors
 async function generateGeminiSummary(transcript: string): Promise<{
   summary: string
   key_topics: string[]
@@ -85,19 +86,15 @@ async function generateGeminiSummary(transcript: string): Promise<{
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `Summarise this coaching conversation. Return ONLY a JSON object, no markdown, no code fences, no explanation.
+              text: `Summarise this coaching conversation in 2-3 sentences. Return plain text only, no JSON, no markdown.
 
 Transcript:
-${transcript}
-
-JSON format:
-{"summary":"2-3 sentence summary","key_topics":["topic1","topic2"],"action_items":["action1"]}`,
+${transcript}`,
             }],
           }],
           generationConfig: {
-            maxOutputTokens: 500,
+            maxOutputTokens: 1000,
             temperature: 0.2,
-            responseMimeType: 'application/json',
           },
         }),
       }
@@ -111,11 +108,18 @@ JSON format:
       return null
     }
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-    if (!text) return null
+    const summaryText: string = (data.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim()
+    if (!summaryText) return null
 
-    const clean = text.replace(/```json|```/g, '').trim()
-    return JSON.parse(clean)
+    // Extract 3 key words from the summary as fallback topics
+    const stopWords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','is','was','are','were','be','been','being','have','has','had','do','did','will','would','could','should','may','might','that','this','it','its','they','their','them','we','our','you','your','i','my'])
+    const keyTopics = summaryText
+      .replace(/[^a-zA-Z\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 4 && !stopWords.has(w.toLowerCase()))
+      .slice(0, 3)
+
+    return { summary: summaryText, key_topics: keyTopics, action_items: [] }
   } catch (err) {
     console.error('[voice-session] Gemini summary failed:', err)
     return null
