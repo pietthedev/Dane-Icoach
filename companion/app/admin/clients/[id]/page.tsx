@@ -2,6 +2,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ConversationCard, { type Message } from './ConversationCard'
+import NoteForm from './NoteForm'
 
 // Service-role client — bypasses RLS for all admin reads
 function getAdminClient() {
@@ -212,29 +213,15 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           )}
         </div>
 
-        {/* ── Admin notes ── */}
-        <div className="lg:col-span-3 bg-white rounded-3xl p-5 border border-line shadow-card">
-          <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-1">
-            My notes on this client
-          </h2>
-          <p className="font-inter text-xs text-muted mb-3">
-            These notes are private to you and never shown to the client.
-          </p>
-          {notes.length === 0 ? (
-            <p className="font-inter text-sm text-muted">No notes yet</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {notes.map((n: Record<string, string>) => (
-                <div key={n.id} className="bg-mist rounded-2xl px-4 py-3">
-                  <p className="font-inter text-sm text-ink">{n.body}</p>
-                  <p className="font-inter text-xs text-muted mt-1">
-                    {new Date(n.created_at).toLocaleDateString('en-ZA')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* ── Admin notes (client component — handles add + history) ── */}
+        <NoteForm
+          clientId={params.id}
+          initialNotes={notes.map((n: Record<string, string>) => ({
+            id: n.id,
+            body: n.body,
+            created_at: n.created_at,
+          }))}
+        />
 
       </div>
     </div>
