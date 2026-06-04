@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 // Service role client — webhook has no user session
 function getServiceClient() {
@@ -46,16 +47,48 @@ interface ElevenLabsWebhookPayload {
 
 export async function POST(req: NextRequest) {
   try {
-    // ── Verify webhook secret ────────────────────────────────────────────────
-    const secret          = process.env.ELEVENLABS_WEBHOOK_SECRET
-    const incomingSecret  = req.headers.get('xi-webhook-secret')
+    // ── Verify HMAC-SHA256 signature ─────────────────────────────────────────
+    // ElevenLabs sends: ElevenLabs-Signature: t=<timestamp>,v0=<hmac-sha256>
+    // Signed string: "<timestamp>.<raw_body>"
+    const rawBody   = await req.text()
+    const sigHeader = req.headers.get('ElevenLabs-Signature') ?? req.headers.get('elevenlabs-signature')
+    const secret    = process.env.ELEVENLABS_WEBHOOK_SECRET
 
-    if (secret && incomingSecret !== secret) {
-      console.warn('[elevenlabs webhook] Invalid secret — rejecting')
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (secret) {
+      if (!sigHeader) {
+        console.warn('[elevenlabs webhook] Missing ElevenLabs-Signature header — rejecting')
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
+      // Parse "t=<timestamp>,v0=<signature>"
+      const parts     = Object.fromEntries(sigHeader.split(',').map(p => p.split('=')))
+      const timestamp = parts['t']
+      const v0        = parts['v0']
+
+      if (!timestamp || !v0) {
+        console.warn('[elevenlabs webhook] Malformed signature header — rejecting')
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
+      // Reject stale webhooks (> 5 minutes old)
+      const ageSeconds = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10)
+      if (ageSeconds > 300) {
+        console.warn(`[elevenlabs webhook] Stale webhook (${ageSeconds}s old) — rejecting`)
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+
+      const expected = crypto
+        .createHmac('sha256', secret)
+        .update(`${timestamp}.${rawBody}`)
+        .digest('hex')
+
+      if (!crypto.timingSafeEqual(Buffer.from(v0, 'hex'), Buffer.from(expected, 'hex'))) {
+        console.warn('[elevenlabs webhook] Invalid signature — rejecting')
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
-    const payload = await req.json() as ElevenLabsWebhookPayload
+    const payload = JSON.parse(rawBody) as ElevenLabsWebhookPayload
 
     // Normalise: some versions nest under data, some don't
     const inner           = payload.data ?? payload

@@ -25,7 +25,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     supabase
       .from('conversations')
       .select(`
-        id, title, created_at, mode,
+        id, title, created_at, mode, elevenlabs_conversation_id,
         conversation_ratings ( rating, color_tag ),
         conversation_summaries ( summary, key_topics )
       `)
@@ -157,6 +157,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                     summary={(summaryRow?.summary as string) ?? null}
                     keyTopics={(summaryRow?.key_topics as string[]) ?? []}
                     messages={messagesByConvId.get(c.id as string) ?? []}
+                    elevenLabsConvId={(c.elevenlabs_conversation_id as string) ?? null}
                   />
                 )
               })}

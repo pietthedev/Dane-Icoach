@@ -19,6 +19,7 @@ export type ConversationCardProps = {
   summary: string | null
   keyTopics: string[]
   messages: Message[]
+  elevenLabsConvId: string | null
 }
 
 const TAG_STYLES: Record<string, string> = {
@@ -32,6 +33,13 @@ const TAG_LABELS: Record<string, string> = {
   green: 'Great', blue: 'Good', amber: 'Okay', red: 'Poor', purple: 'Insight',
 }
 
+interface AudioData {
+  audio_url: string | null
+  expires_at: string | null
+  duration_secs: number | null
+  cost_credits: number | null
+}
+
 export default function ConversationCard({
   title,
   mode,
@@ -41,8 +49,28 @@ export default function ConversationCard({
   summary,
   keyTopics,
   messages,
+  elevenLabsConvId,
 }: ConversationCardProps) {
   const [showTranscript, setShowTranscript] = useState(false)
+  const [showAudio,      setShowAudio]      = useState(false)
+  const [audioData,      setAudioData]      = useState<AudioData | null>(null)
+  const [loadingAudio,   setLoadingAudio]   = useState(false)
+
+  async function handleShowAudio() {
+    if (showAudio) { setShowAudio(false); return }
+    setShowAudio(true)
+    if (audioData || !elevenLabsConvId) return
+    setLoadingAudio(true)
+    try {
+      const res = await fetch(`/api/admin/conversation-audio?elevenlabs_id=${elevenLabsConvId}`)
+      const data = await res.json() as AudioData
+      setAudioData(data)
+    } catch {
+      setAudioData({ audio_url: null, expires_at: null, duration_secs: null, cost_credits: null })
+    } finally {
+      setLoadingAudio(false)
+    }
+  }
 
   return (
     <div className="border border-line rounded-2xl p-4">
@@ -89,43 +117,86 @@ export default function ConversationCard({
         </div>
       )}
 
-      {/* ── Transcript toggle ── */}
-      {messages.length > 0 && (
-        <div className="mt-1">
+      {/* ── Actions row ── */}
+      <div className="flex flex-wrap gap-3 mt-1">
+        {messages.length > 0 && (
           <button
             onClick={() => setShowTranscript(prev => !prev)}
-            className="font-inter text-xs font-semibold text-plum hover:text-plum-dark transition-colors flex items-center gap-1"
+            className="font-inter text-xs font-semibold text-plum hover:text-plum-dark transition-colors"
           >
             {showTranscript ? '▲ Hide transcript' : `▼ Read transcript (${messages.length} messages)`}
           </button>
+        )}
 
-          {showTranscript && (
-            <div className="mt-3 flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
-              {messages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`rounded-xl px-3 py-2 text-xs font-inter leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-plum/8 text-ink ml-6'
-                      : 'bg-mist text-ink mr-6'
-                  }`}
-                >
-                  <span className={`font-semibold mr-1.5 ${msg.role === 'user' ? 'text-plum' : 'text-plum-dark'}`}>
-                    {msg.role === 'user' ? 'Client' : 'Companion'}
-                  </span>
-                  <span className="whitespace-pre-wrap">{msg.content}</span>
-                  <p className="text-muted text-[10px] mt-1">
-                    {new Date(msg.created_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+        {elevenLabsConvId && (
+          <button
+            onClick={handleShowAudio}
+            className="font-inter text-xs font-semibold text-plum hover:text-plum-dark transition-colors"
+          >
+            {showAudio ? '▲ Hide recording' : '🎙️ Play recording'}
+          </button>
+        )}
+      </div>
+
+      {/* ── Audio player ── */}
+      {showAudio && elevenLabsConvId && (
+        <div className="mt-3 bg-mist rounded-xl px-3 py-3">
+          {loadingAudio ? (
+            <p className="font-inter text-xs text-muted">Loading recording…</p>
+          ) : audioData?.audio_url ? (
+            <div className="flex flex-col gap-1.5">
+              <p className="font-inter text-[10px] text-muted uppercase tracking-wide mb-1">
+                Voice recording — available for 30 days
+              </p>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <audio controls src={audioData.audio_url} className="w-full h-9" style={{ borderRadius: '10px' }} />
+              <div className="flex gap-4 mt-1">
+                {audioData.duration_secs != null && (
+                  <p className="font-inter text-[10px] text-muted">
+                    Duration: {Math.floor(audioData.duration_secs / 60)}m {audioData.duration_secs % 60}s
                   </p>
-                </div>
-              ))}
+                )}
+                {audioData.expires_at && (
+                  <p className="font-inter text-[10px] text-muted">
+                    Expires {new Date(audioData.expires_at).toLocaleDateString('en-ZA')}
+                  </p>
+                )}
+              </div>
             </div>
+          ) : (
+            <p className="font-inter text-xs text-muted">
+              Recording not available — may still be processing or has expired.
+            </p>
           )}
         </div>
       )}
 
-      {messages.length === 0 && !summary && (
-        <p className="font-inter text-xs text-muted italic">No messages or summary available.</p>
+      {/* ── Transcript ── */}
+      {showTranscript && messages.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2 max-h-96 overflow-y-auto pr-1">
+          {messages.map(msg => (
+            <div
+              key={msg.id}
+              className={`rounded-xl px-3 py-2 text-xs font-inter leading-relaxed ${
+                msg.role === 'user'
+                  ? 'bg-plum/8 text-ink ml-6'
+                  : 'bg-white border border-line text-ink mr-6'
+              }`}
+            >
+              <span className={`font-semibold mr-1.5 ${msg.role === 'user' ? 'text-plum' : 'text-plum-dark'}`}>
+                {msg.role === 'user' ? 'Client' : 'Companion'}
+              </span>
+              <span className="whitespace-pre-wrap">{msg.content}</span>
+              <p className="text-muted text-[10px] mt-1">
+                {new Date(msg.created_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {messages.length === 0 && !summary && !elevenLabsConvId && (
+        <p className="font-inter text-xs text-muted italic mt-2">No messages or summary available.</p>
       )}
 
       <p className="font-inter text-[10px] text-muted mt-3">
