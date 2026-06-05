@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 interface Note {
   id: string
-  body: string
+  note: string
   created_at: string
 }
 
@@ -107,7 +107,7 @@ export default function NoteForm({ clientId, initialNotes }: NoteFormProps) {
           </p>
           {notes.map(n => (
             <div key={n.id} className="bg-mist rounded-2xl px-4 py-3 border border-line">
-              <p className="font-inter text-sm text-ink leading-relaxed whitespace-pre-wrap">{n.body}</p>
+              <p className="font-inter text-sm text-ink leading-relaxed whitespace-pre-wrap">{n.note}</p>
               <p className="font-inter text-[10px] text-muted mt-2">
                 {new Date(n.created_at).toLocaleString('en-ZA', {
                   day: 'numeric', month: 'short', year: 'numeric',

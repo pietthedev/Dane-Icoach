@@ -47,7 +47,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       .limit(10),
     supabase
       .from('admin_client_notes')
-      .select('id, body, created_at')
+      .select('id, note, created_at')
       .eq('client_id', params.id)
       .order('created_at', { ascending: false }),
   ])
@@ -219,7 +219,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           clientId={params.id}
           initialNotes={notes.map((n: Record<string, string>) => ({
             id: n.id,
-            body: n.body,
+            note: n.note,
             created_at: n.created_at,
           }))}
         />

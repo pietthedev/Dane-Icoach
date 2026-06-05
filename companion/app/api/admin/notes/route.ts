@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await serviceClient
       .from('admin_client_notes')
-      .insert({ client_id, body: body.trim() })
-      .select('id, body, created_at')
+      .insert({ client_id, author_id: user.id, note: body.trim() })
+      .select('id, note, created_at')
       .single()
 
     if (error) {
