@@ -53,7 +53,8 @@ export default function AdminShell({ user, role, children }: AdminShellProps) {
     setSigningOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
+    // Hard redirect — clears all client-side session state and cookie cache
+    window.location.href = '/'
   }
 
   const Sidebar = () => (

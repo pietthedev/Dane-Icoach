@@ -45,7 +45,10 @@ export async function updateSession(request: NextRequest) {
     if (!role) return NextResponse.redirect(new URL('/portal', request.url))
   }
 
-  if (user && request.nextUrl.pathname.startsWith('/auth')) {
+  // Redirect authenticated users away from auth pages — but NOT /auth/callback
+  // which must always be reachable, and not right after sign-out
+  if (user && request.nextUrl.pathname.startsWith('/auth') &&
+      !request.nextUrl.pathname.startsWith('/auth/callback')) {
     return NextResponse.redirect(new URL('/portal', request.url))
   }
 

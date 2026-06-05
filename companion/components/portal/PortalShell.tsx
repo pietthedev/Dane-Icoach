@@ -76,7 +76,8 @@ export default function PortalShell({ user, profile, isAdmin = false, children }
     setSigningOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
+    // Hard redirect — clears all client-side session state and cookie cache
+    window.location.href = '/'
   }
 
   const isActive = (href: string) =>
