@@ -36,8 +36,10 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      console.error('[admin/notes] Insert error:', error)
-      return NextResponse.json({ error: 'Failed to save note' }, { status: 500 })
+      console.error('[admin/notes] Insert error code:', error.code)
+      console.error('[admin/notes] Insert error message:', error.message)
+      console.error('[admin/notes] Insert error details:', error.details)
+      return NextResponse.json({ error: error.message ?? 'Failed to save note' }, { status: 500 })
     }
 
     return NextResponse.json({ note: data })
