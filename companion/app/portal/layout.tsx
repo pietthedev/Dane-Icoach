@@ -13,7 +13,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const [profileRes, adminRes] = await Promise.allSettled([
     supabase
       .from('profiles')
-      .select('full_name, avatar_url, plan')
+      .select('full_name, avatar_url, plan, pref_quote_of_day')
       .eq('id', user.id)
       .single(),
     createServiceClient(
@@ -34,7 +34,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <PortalShell user={user} profile={profile} isAdmin={false}>
-      <OneSignalProvider userId={user.id} />
+      <OneSignalProvider userId={user.id} prefQuoteOfDay={profile?.pref_quote_of_day ?? true} />
       {children}
     </PortalShell>
   )

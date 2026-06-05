@@ -3,10 +3,11 @@
 import { useEffect, useRef } from 'react'
 
 interface OneSignalProviderProps {
-  userId: string
+  userId:          string
+  prefQuoteOfDay?: boolean  // synced as a OneSignal tag for targeted daily sends
 }
 
-export default function OneSignalProvider({ userId }: OneSignalProviderProps) {
+export default function OneSignalProvider({ userId, prefQuoteOfDay = true }: OneSignalProviderProps) {
   const initialized = useRef(false)
 
   useEffect(() => {
@@ -19,23 +20,26 @@ export default function OneSignalProvider({ userId }: OneSignalProviderProps) {
       return
     }
 
-    // Dynamic import avoids SSR issues with window references
     import('react-onesignal').then(({ default: OneSignal }) => {
       OneSignal.init({
         appId,
         allowLocalhostAsSecureOrigin: true,
         serviceWorkerParam: { scope: '/' },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        notifyButton: { enable: false } as any, // we use our own UI
+        notifyButton: { enable: false } as any,
       }).then(() => {
-        // Link this browser device to the Supabase user ID
+        // Link device to user
         OneSignal.login(userId).catch(err =>
           console.warn('[OneSignal] login error:', err)
         )
-        console.log('[OneSignal] Initialized for user:', userId)
+
+        // Tag with quote preference so daily cron can target opted-in users only
+        OneSignal.User.addTag('quote_of_day', prefQuoteOfDay ? '1' : '0')
+
+        console.log('[OneSignal] Initialized for user:', userId, '| quote_of_day:', prefQuoteOfDay)
       }).catch(err => console.warn('[OneSignal] init error:', err))
     }).catch(err => console.warn('[OneSignal] import error:', err))
-  }, [userId])
+  }, [userId, prefQuoteOfDay])
 
   return null
 }
