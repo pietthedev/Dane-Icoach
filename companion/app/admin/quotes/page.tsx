@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 interface Quote { id: string; quote_text: string; author: string | null; category: string | null; source: string; created_at: string }
 
@@ -14,9 +13,11 @@ export default function AdminQuotesPage() {
   const [generating, setGenerating] = useState(false)
 
   const load = useCallback(async () => {
-    const supabase = createClient()
-    const { data } = await supabase.from('quotes').select('id, quote_text, author, category, source, created_at').order('created_at', { ascending: false }).limit(20)
-    setQuotes((data as Quote[]) ?? [])
+    const res = await fetch('/api/admin/quotes')
+    if (res.ok) {
+      const data = await res.json()
+      setQuotes(data.quotes ?? [])
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -24,8 +25,15 @@ export default function AdminQuotesPage() {
   async function saveQuote() {
     if (!body.trim()) return
     setSaving(true)
-    const supabase = createClient()
-    await supabase.from('quotes').insert({ quote_text: body, author: author || null, category: category || null, source: 'dane' })
+    const res = await fetch('/api/admin/quotes', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ quote_text: body, author: author || undefined, category: category || undefined }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      console.error('[quotes] Save error:', data.error)
+    }
     setBody(''); setAuthor(''); setCategory('')
     await load()
     setSaving(false)
