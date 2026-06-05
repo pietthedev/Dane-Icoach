@@ -33,13 +33,6 @@ const TAG_LABELS: Record<string, string> = {
   green: 'Great', blue: 'Good', amber: 'Okay', red: 'Poor', purple: 'Insight',
 }
 
-interface AudioData {
-  audio_url: string | null
-  expires_at: string | null
-  duration_secs: number | null
-  cost_credits: number | null
-}
-
 export default function ConversationCard({
   title,
   mode,
@@ -53,24 +46,6 @@ export default function ConversationCard({
 }: ConversationCardProps) {
   const [showTranscript, setShowTranscript] = useState(false)
   const [showAudio,      setShowAudio]      = useState(false)
-  const [audioData,      setAudioData]      = useState<AudioData | null>(null)
-  const [loadingAudio,   setLoadingAudio]   = useState(false)
-
-  async function handleShowAudio() {
-    if (showAudio) { setShowAudio(false); return }
-    setShowAudio(true)
-    if (audioData || !elevenLabsConvId) return
-    setLoadingAudio(true)
-    try {
-      const res = await fetch(`/api/admin/conversation-audio?elevenlabs_id=${elevenLabsConvId}`)
-      const data = await res.json() as AudioData
-      setAudioData(data)
-    } catch {
-      setAudioData({ audio_url: null, expires_at: null, duration_secs: null, cost_credits: null })
-    } finally {
-      setLoadingAudio(false)
-    }
-  }
 
   return (
     <div className="border border-line rounded-2xl p-4">
@@ -130,7 +105,7 @@ export default function ConversationCard({
 
         {elevenLabsConvId && (
           <button
-            onClick={handleShowAudio}
+            onClick={() => setShowAudio(prev => !prev)}
             className="font-inter text-xs font-semibold text-plum hover:text-plum-dark transition-colors"
           >
             {showAudio ? '▲ Hide recording' : '🎙️ Play recording'}
@@ -138,36 +113,20 @@ export default function ConversationCard({
         )}
       </div>
 
-      {/* ── Audio player ── */}
+      {/* ── Audio player — streamed directly from admin API route ── */}
       {showAudio && elevenLabsConvId && (
         <div className="mt-3 bg-mist rounded-xl px-3 py-3">
-          {loadingAudio ? (
-            <p className="font-inter text-xs text-muted">Loading recording…</p>
-          ) : audioData?.audio_url ? (
-            <div className="flex flex-col gap-1.5">
-              <p className="font-inter text-[10px] text-muted uppercase tracking-wide mb-1">
-                Voice recording — available for 30 days
-              </p>
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              <audio controls src={audioData.audio_url} className="w-full h-9" style={{ borderRadius: '10px' }} />
-              <div className="flex gap-4 mt-1">
-                {audioData.duration_secs != null && (
-                  <p className="font-inter text-[10px] text-muted">
-                    Duration: {Math.floor(audioData.duration_secs / 60)}m {audioData.duration_secs % 60}s
-                  </p>
-                )}
-                {audioData.expires_at && (
-                  <p className="font-inter text-[10px] text-muted">
-                    Expires {new Date(audioData.expires_at).toLocaleDateString('en-ZA')}
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="font-inter text-xs text-muted">
-              Recording not available — may still be processing or has expired.
-            </p>
-          )}
+          <p className="font-inter text-[10px] text-muted uppercase tracking-wide mb-2">
+            Voice recording — available for 30 days
+          </p>
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <audio
+            controls
+            src={`/api/admin/conversation-audio?elevenlabs_id=${elevenLabsConvId}`}
+            className="w-full h-9"
+            style={{ borderRadius: '10px' }}
+            preload="none"
+          />
         </div>
       )}
 
