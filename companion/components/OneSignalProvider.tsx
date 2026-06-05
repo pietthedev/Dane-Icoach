@@ -25,7 +25,8 @@ export default function OneSignalProvider({ userId }: OneSignalProviderProps) {
         appId,
         allowLocalhostAsSecureOrigin: true,
         serviceWorkerParam: { scope: '/' },
-        notifyButton: { enable: false }, // we use our own UI
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        notifyButton: { enable: false } as any, // we use our own UI
       }).then(() => {
         // Link this browser device to the Supabase user ID
         OneSignal.login(userId).catch(err =>
