@@ -15,6 +15,7 @@ interface Profile {
 interface PortalShellProps {
   user: User
   profile: Profile | null
+  isAdmin?: boolean
   children: React.ReactNode
 }
 
@@ -52,7 +53,7 @@ const accountNav: NavItem[] = [
   { href: '/portal/export', label: 'Data & export', icon: '' },
 ]
 
-export default function PortalShell({ user, profile, children }: PortalShellProps) {
+export default function PortalShell({ user, profile, isAdmin = false, children }: PortalShellProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -68,8 +69,8 @@ export default function PortalShell({ user, profile, children }: PortalShellProp
     .slice(0, 2)
 
   const plan = profile?.plan ?? 'start'
-  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1)
-  const planClass = PLAN_COLORS[plan] ?? PLAN_COLORS.start
+  const planLabel = isAdmin ? 'Admin' : plan.charAt(0).toUpperCase() + plan.slice(1)
+  const planClass = isAdmin ? 'bg-plum-dark text-white' : (PLAN_COLORS[plan] ?? PLAN_COLORS.start)
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -190,7 +191,9 @@ export default function PortalShell({ user, profile, children }: PortalShellProp
               <span className="hidden sm:inline">Talk</span>
             </Link>
 
-            {plan === 'free' || plan === 'start' ? (
+            {isAdmin ? (
+              <span className={`font-inter font-semibold text-xs px-2.5 py-1 rounded-full hidden sm:inline-block ${planClass}`}>{planLabel}</span>
+            ) : plan === 'free' || plan === 'start' ? (
               <Link href="/portal/billing"
                 className="font-inter font-semibold text-xs text-plum border border-plum/30 px-3 py-1.5 rounded-full hover:bg-plum/5 transition-colors hidden sm:block">
                 Upgrade
