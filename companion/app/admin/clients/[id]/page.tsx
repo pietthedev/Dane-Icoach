@@ -1,4 +1,5 @@
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ConversationCard, { type Message } from './ConversationCard'
@@ -13,7 +14,21 @@ function getAdminClient() {
 }
 
 export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+  // Verify the logged-in coach owns this client
+  const authClient = createClient()
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user) notFound()
+
   const supabase = getAdminClient()
+
+  const { data: assignment } = await supabase
+    .from('coach_clients')
+    .select('client_id')
+    .eq('coach_id', user.id)
+    .eq('client_id', params.id)
+    .single()
+
+  if (!assignment) notFound()
 
   // ── Step 1: fetch everything except messages in parallel ──────────────────
   const [profileRes, convsRes, bookingsRes, hwRes, notesRes] = await Promise.allSettled([

@@ -9,6 +9,8 @@ import type { User } from '@supabase/supabase-js'
 interface AdminShellProps {
   user: User
   role: string
+  adminName?: string | null
+  adminAvatarUrl?: string | null
   children: React.ReactNode
 }
 
@@ -37,14 +39,14 @@ const ROLE_STYLES: Record<string, string> = {
   viewer: 'bg-mist text-plum-dark',
 }
 
-export default function AdminShell({ user, role, children }: AdminShellProps) {
+export default function AdminShell({ user, role, adminName, adminAvatarUrl, children }: AdminShellProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
 
-  const displayName = user.email?.split('@')[0] ?? 'Admin'
-  const initials = displayName.slice(0, 2).toUpperCase()
+  const displayName = adminName ?? user.email?.split('@')[0] ?? 'Admin'
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
@@ -93,11 +95,15 @@ export default function AdminShell({ user, role, children }: AdminShellProps) {
       {/* User footer */}
       <div className="px-3 pb-4 pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-2.5 px-2 py-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-            <span className="font-poppins font-bold text-white text-xs">{initials}</span>
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {adminAvatarUrl
+              ? <img src={adminAvatarUrl} alt="" className="w-8 h-8 object-cover" />
+              : <span className="font-poppins font-bold text-white text-xs">{initials}</span>
+            }
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-inter font-semibold text-white text-xs truncate">{user.email}</p>
+            <p className="font-inter font-semibold text-white text-xs truncate">{displayName}</p>
+            <p className="font-inter text-white/50 text-[10px] truncate">{user.email}</p>
             <span className={`font-inter font-semibold text-[10px] px-2 py-0.5 rounded-full ${ROLE_STYLES[role] ?? ROLE_STYLES.viewer}`}>
               {role.replace('_', ' ')}
             </span>

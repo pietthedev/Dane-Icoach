@@ -34,8 +34,8 @@ export default function LoginPage() {
       .eq('user_id', data.user.id)
       .single()
 
-    router.push(adminRole ? '/admin' : '/portal')
-    router.refresh()
+    // Hard redirect to clear all client-side state
+    window.location.href = adminRole ? '/admin' : '/portal'
   }
 
   return (

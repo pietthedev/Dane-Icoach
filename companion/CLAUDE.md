@@ -6,7 +6,22 @@
 - Supabase project ID: `qqxrifvdnnsajvnbqisr`
 - Supabase URL: `https://qqxrifvdnnsajvnbqisr.supabase.co`
 
+## Access Control Rules
+- **Admins never access `/portal`** — portal layout redirects them to `/admin` immediately
+- **New clients are auto-assigned to Danè** via a DB trigger on signup
+- **Coach sees only their own clients** — `coach_clients.coach_id = auth.uid()` filters all admin client pages
+- Login page and auth callback both check `admin_roles` and redirect admins to `/admin`
+
 ## Critical Schema — Exact Column Names
+
+### admin_profiles
+`id` (matches auth.users id), `full_name`, `email`, `avatar_url`, `phone`, `timezone`, `bio`
+- Danè's row: id = `30e904de-2252-4cc7-9d40-ff09ee3614b0`
+
+### coach_clients
+`id`, `coach_id` (uuid → admin_profiles.id), `client_id` (uuid → profiles.id),
+`assigned_at`, `is_primary`
+- All existing clients assigned to Danè; trigger auto-assigns new signups to Danè
 
 ### profiles
 `id`, `full_name` (NOT first_name/last_name), `avatar_url`, `phone`, `timezone`,

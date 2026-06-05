@@ -1,7 +1,7 @@
+import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
-// Use service-role client so RLS doesn't block reads of admin_client_overview
 function getAdminClient() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,14 +20,29 @@ type ClientRow = {
 }
 
 export default async function ClientsListPage() {
-  const supabase = getAdminClient()
+  // Get the logged-in coach's user ID
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  const { data: clients, error } = await supabase
-    .from('admin_client_overview')
-    .select(
-      'id, full_name, plan, member_since, total_conversations, avg_rating, subscription_status'
-    )
-    .order('member_since', { ascending: false })
+  const adminClient = getAdminClient()
+
+  // Get only this coach's assigned clients from coach_clients
+  const { data: assignments } = await adminClient
+    .from('coach_clients')
+    .select('client_id')
+    .eq('coach_id', user.id)
+
+  const clientIds = (assignments ?? []).map((r: { client_id: string }) => r.client_id)
+
+  // Fetch client overview rows for those IDs
+  const { data: clients, error } = clientIds.length > 0
+    ? await adminClient
+        .from('admin_client_overview')
+        .select('id, full_name, plan, member_since, total_conversations, avg_rating, subscription_status')
+        .in('id', clientIds)
+        .order('member_since', { ascending: false })
+    : { data: [], error: null }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -37,7 +52,7 @@ export default async function ClientsListPage() {
             Clients
           </h1>
           <p className="font-inter text-sm text-muted mt-0.5">
-            {clients?.length ?? 0} member{clients?.length !== 1 ? 's' : ''}
+            {clients?.length ?? 0} client{clients?.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
@@ -48,10 +63,10 @@ export default async function ClientsListPage() {
         </div>
       )}
 
-      {/* ── Mobile card list (< md) ─────────────────────────────────────── */}
+      {/* ── Mobile card list (< md) ── */}
       <div className="md:hidden flex flex-col gap-3">
         {!clients || clients.length === 0 ? (
-          <p className="font-inter text-sm text-muted text-center py-12">No clients yet.</p>
+          <p className="font-inter text-sm text-muted text-center py-12">No clients assigned yet.</p>
         ) : (
           clients.map((c: ClientRow) => (
             <div key={c.id} className="bg-white rounded-3xl p-4 border border-line shadow-card">
@@ -63,7 +78,7 @@ export default async function ClientsListPage() {
                   </p>
                 </div>
                 <span className="font-inter text-xs px-2.5 py-1 rounded-full bg-mist text-plum font-semibold capitalize flex-shrink-0">
-                  {c.plan ?? 'start'}
+                  {c.plan ?? 'free'}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3">
@@ -96,7 +111,7 @@ export default async function ClientsListPage() {
         )}
       </div>
 
-      {/* ── Desktop table (md+) ──────────────────────────────────────────── */}
+      {/* ── Desktop table (md+) ── */}
       <div className="hidden md:block bg-white rounded-3xl border border-line shadow-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -115,7 +130,7 @@ export default async function ClientsListPage() {
               {!clients || clients.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="font-inter text-sm text-muted text-center py-12">
-                    No clients yet.
+                    No clients assigned yet.
                   </td>
                 </tr>
               ) : (
@@ -126,7 +141,7 @@ export default async function ClientsListPage() {
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="font-inter text-xs px-2.5 py-1 rounded-full bg-mist text-plum font-semibold capitalize">
-                        {c.plan ?? 'start'}
+                        {c.plan ?? 'free'}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
@@ -172,16 +187,15 @@ export default async function ClientsListPage() {
 function StatusBadge({ status }: { status: string | null }) {
   const s = status ?? 'unknown'
   const styles: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    trialing: 'bg-blue-100 text-blue-700',
-    past_due: 'bg-amber-100 text-amber-700',
-    canceled: 'bg-red-100 text-red-700',
+    active:    'bg-green-100 text-green-700',
+    trialing:  'bg-blue-100 text-blue-700',
+    past_due:  'bg-amber-100 text-amber-700',
+    canceled:  'bg-red-100 text-red-700',
     incomplete: 'bg-gray-100 text-gray-600',
-    unknown: 'bg-mist text-muted',
+    unknown:   'bg-mist text-muted',
   }
-  const cls = styles[s] ?? styles.unknown
   return (
-    <span className={`font-inter text-[10px] px-2.5 py-1 rounded-full font-semibold capitalize ${cls}`}>
+    <span className={`font-inter text-[10px] px-2.5 py-1 rounded-full font-semibold capitalize ${styles[s] ?? styles.unknown}`}>
       {s.replace('_', ' ')}
     </span>
   )

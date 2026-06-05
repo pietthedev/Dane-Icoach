@@ -28,8 +28,11 @@ export default async function PortalLayout({ children }: { children: React.React
   const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : null
   const isAdmin = adminRes.status === 'fulfilled' && adminRes.value.data != null
 
+  // Admins never use the portal — send them to /admin
+  if (isAdmin) redirect('/admin')
+
   return (
-    <PortalShell user={user} profile={profile} isAdmin={isAdmin}>
+    <PortalShell user={user} profile={profile} isAdmin={false}>
       {children}
     </PortalShell>
   )

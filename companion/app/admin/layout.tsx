@@ -13,16 +13,32 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const { data: roleData } = await adminClient
-    .from('admin_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .single()
+  // Check admin role and fetch admin profile in parallel
+  const [roleRes, adminProfileRes] = await Promise.allSettled([
+    adminClient
+      .from('admin_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single(),
+    adminClient
+      .from('admin_profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .single(),
+  ])
+
+  const roleData        = roleRes.status === 'fulfilled' ? roleRes.value.data : null
+  const adminProfile    = adminProfileRes.status === 'fulfilled' ? adminProfileRes.value.data : null
 
   if (!roleData) redirect('/portal')
 
   return (
-    <AdminShell user={user} role={roleData.role}>
+    <AdminShell
+      user={user}
+      role={roleData.role}
+      adminName={adminProfile?.full_name ?? null}
+      adminAvatarUrl={adminProfile?.avatar_url ?? null}
+    >
       {children}
     </AdminShell>
   )
