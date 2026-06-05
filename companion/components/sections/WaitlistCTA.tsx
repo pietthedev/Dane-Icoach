@@ -7,22 +7,48 @@ const VP = { once: true, margin: "-60px" };
 
 const options = [
   { value: "", label: "I am interested in..." },
-  { value: "free", label: "Free starter journey" },
-  { value: "monthly", label: "Monthly coaching companion" },
-  { value: "human", label: "Human coaching with Danè" },
-  { value: "team", label: "Team or company package" },
+  { value: "Free starter journey", label: "Free starter journey" },
+  { value: "Monthly coaching companion", label: "Monthly coaching companion" },
+  { value: "Human coaching with Danè", label: "Human coaching with Danè" },
+  { value: "Team or company package", label: "Team or company package" },
 ];
+
+type Status = "idle" | "loading" | "success" | "error";
 
 export default function WaitlistCTA() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [interest, setInterest] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name || !email) return;
-    setSubmitted(true);
+    if (status === "loading") return;
+
+    setStatus("loading");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, interest }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        setErrorMsg(data.error || "Something went wrong. Please try again.");
+        setStatus("error");
+      } else {
+        setStatus("success");
+      }
+    } catch {
+      setErrorMsg("Network error — please check your connection and try again.");
+      setStatus("error");
+    }
   }
 
   return (
@@ -39,6 +65,7 @@ export default function WaitlistCTA() {
         }}
       >
         <div className="grid md:grid-cols-2 gap-0 p-8 md:p-10 items-center">
+          {/* Left copy */}
           <div className="flex flex-col gap-5 md:pr-12">
             <span
               className="font-inter font-semibold uppercase tracking-widest text-xs"
@@ -63,8 +90,9 @@ export default function WaitlistCTA() {
             </p>
           </div>
 
+          {/* Right: form / success / error */}
           <div className="mt-8 md:mt-0">
-            {submitted ? (
+            {status === "success" ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -87,41 +115,49 @@ export default function WaitlistCTA() {
                 className="bg-white rounded-[28px] p-7 flex flex-col gap-4 shadow-strong"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
+                  <label htmlFor="waitlist-name" className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
                     Name
                   </label>
                   <input
+                    id="waitlist-name"
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your first name"
-                    className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors"
+                    autoComplete="given-name"
+                    disabled={status === "loading"}
+                    className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors disabled:opacity-60"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
+                  <label htmlFor="waitlist-email" className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
                     Email
                   </label>
                   <input
+                    id="waitlist-email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors"
+                    autoComplete="email"
+                    disabled={status === "loading"}
+                    className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors disabled:opacity-60"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
+                  <label htmlFor="waitlist-interest" className="font-inter font-semibold text-plum-dark text-xs uppercase tracking-wide">
                     Interest
                   </label>
                   <select
+                    id="waitlist-interest"
                     value={interest}
                     onChange={(e) => setInterest(e.target.value)}
-                    className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors appearance-none"
+                    disabled={status === "loading"}
+                    className="font-inter text-sm text-ink border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-lavender transition-colors appearance-none disabled:opacity-60"
                   >
                     {options.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -131,11 +167,76 @@ export default function WaitlistCTA() {
                   </select>
                 </div>
 
+                {/* Consent checkbox */}
+                <div className="flex items-start gap-3">
+                  <input
+                    id="waitlist-consent"
+                    type="checkbox"
+                    required
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    disabled={status === "loading"}
+                    className="mt-0.5 flex-shrink-0 w-4 h-4 rounded border-mist accent-plum-dark disabled:opacity-60 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="waitlist-consent"
+                    className="font-inter text-xs text-muted leading-relaxed cursor-pointer"
+                  >
+                    I agree to be contacted about Companion by Danè and
+                    understand this is a coaching service, not therapy or
+                    emergency support.
+                  </label>
+                </div>
+
+                {/* Error message */}
+                {status === "error" && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="font-inter text-xs rounded-xl px-3 py-2.5 text-center"
+                    style={{
+                      color: "#c0392b",
+                      background: "#fdf0ef",
+                      border: "1px solid #f5c6c2",
+                    }}
+                  >
+                    {errorMsg}
+                  </motion.p>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full font-inter font-semibold text-sm text-white py-3.5 rounded-2xl bg-plum-dark hover:bg-plum transition-colors duration-200 shadow-soft mt-1"
+                  disabled={status === "loading"}
+                  className="w-full font-inter font-semibold text-sm text-white py-3.5 rounded-2xl bg-plum-dark hover:bg-plum transition-colors duration-200 shadow-soft mt-1 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Join early access
+                  {status === "loading" ? (
+                    <>
+                      <svg
+                        className="animate-spin"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"
+                        />
+                      </svg>
+                      Submitting…
+                    </>
+                  ) : (
+                    "Join early access"
+                  )}
                 </button>
               </form>
             )}

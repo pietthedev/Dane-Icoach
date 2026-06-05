@@ -143,7 +143,7 @@ export default function Promise() {
         <div className="relative min-h-[320px]">
           <ImagePlaceholder
             src="/images/about-coaching.svg"
-            alt="Danè — Coaching in Action"
+            alt="Danè de Klerk in a human coaching session — warm, reflective and focused"
             label="Danè — Coaching in Action"
             fill
             className="absolute inset-0 rounded-r-[34px]"

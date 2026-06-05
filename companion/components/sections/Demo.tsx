@@ -43,7 +43,7 @@ export default function Demo() {
   return (
     <section id="demo" className="max-w-7xl mx-auto px-6 py-10 md:py-14">
       <div className="grid md:grid-cols-2 gap-10 items-start">
-        {/* LEFT — Chat mockup */}
+        {/* LEFT — Chat mockup (decorative demo, not a live chatbot) */}
         <motion.div
           initial="hidden"
           whileInView="show"
@@ -51,6 +51,8 @@ export default function Demo() {
           variants={fadeUp}
           className="bg-white rounded-[30px] shadow-strong overflow-hidden flex flex-col"
           style={{ minHeight: "480px" }}
+          aria-label="Example coaching conversation with the AI companion (demonstration only)"
+          role="img"
         >
           {/* Chat header */}
           <div
