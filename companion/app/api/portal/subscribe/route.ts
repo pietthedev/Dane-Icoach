@@ -33,9 +33,20 @@ export async function POST(req: NextRequest) {
     const subaccount   = process.env.PAYSTACK_SUBACCOUNT_CODE
     const secretKey    = process.env.PAYSTACK_SECRET_KEY
 
+    // Paystack plan codes enable recurring monthly billing
+    const planCodes: Record<string, string | undefined> = {
+      grow:     process.env.PAYSTACK_GROW_PLAN_CODE,
+      business: process.env.PAYSTACK_BUSINESS_PLAN_CODE,
+    }
+    const planCode = planCodes[plan]
+
     if (!secretKey) {
       console.error('[subscribe] PAYSTACK_SECRET_KEY not set')
       return NextResponse.json({ error: 'Payment not configured' }, { status: 500 })
+    }
+
+    if (!planCode) {
+      console.warn(`[subscribe] Plan code not set for "${plan}" — transaction will be one-time only`)
     }
 
     const paystackRes = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -50,10 +61,12 @@ export async function POST(req: NextRequest) {
         currency:     'ZAR',
         callback_url: callbackUrl,
         channels:     ['card'],
+        // Including plan code tells Paystack to create a recurring subscription
+        ...(planCode ? { plan: planCode } : {}),
         metadata: {
-          user_id:    user.id,
+          user_id:       user.id,
           plan,
-          plan_label: PLAN_LABELS[plan],
+          plan_label:    PLAN_LABELS[plan],
           cancel_action: `${siteUrl}/portal/billing`,
         },
         ...(subaccount ? {

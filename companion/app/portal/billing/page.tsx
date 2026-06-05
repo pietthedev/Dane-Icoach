@@ -77,7 +77,7 @@ export default async function BillingPage({
       .single(),
     supabase
       .from('subscriptions')
-      .select('plan, status, current_period_end, paystack_subscription_code')
+      .select('plan, status, current_period_end, current_period_start, paystack_subscription_code')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -142,10 +142,21 @@ export default async function BillingPage({
             </div>
             {sub?.current_period_end && (
               <p className="font-inter text-xs text-muted mt-1">
-                {planStatus === 'cancelled' ? 'Access until' : 'Renews'}{' '}
-                {new Date(sub.current_period_end).toLocaleDateString('en-ZA', {
-                  day: 'numeric', month: 'long', year: 'numeric',
-                })}
+                {planStatus === 'cancelled'
+                  ? 'Access until'
+                  : planStatus === 'past_due'
+                  ? '⚠️ Payment failed — next attempt'
+                  : 'Next billing date'}{' '}
+                <span className="font-semibold text-ink">
+                  {new Date(sub.current_period_end).toLocaleDateString('en-ZA', {
+                    day: 'numeric', month: 'long', year: 'numeric',
+                  })}
+                </span>
+              </p>
+            )}
+            {!sub?.current_period_end && isPaid && planStatus === 'active' && (
+              <p className="font-inter text-xs text-muted mt-1">
+                Recurring monthly — billing date will show after first renewal
               </p>
             )}
           </div>
