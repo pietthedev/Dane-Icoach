@@ -60,16 +60,22 @@ export default function PortalShell({ user, profile, isAdmin = false, children }
   const [signingOut, setSigningOut] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
-  // Fetch unread notification count on mount
+  // Fetch unread notification count — re-check on every navigation
   useEffect(() => {
-    const supabase = createClient()
-    supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('read', false)
-      .then(({ count }) => setUnreadCount(count ?? 0))
-      .catch(() => {})
-  }, [pathname]) // re-check when navigating
+    let cancelled = false
+    async function fetchUnread() {
+      try {
+        const supabase = createClient()
+        const { count } = await supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('read', false)
+        if (!cancelled) setUnreadCount(count ?? 0)
+      } catch { /* ignore */ }
+    }
+    fetchUnread()
+    return () => { cancelled = true }
+  }, [pathname])
 
   const displayName = profile?.full_name ?? user.email?.split('@')[0] ?? 'You'
 
