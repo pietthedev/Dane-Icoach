@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import PortalShell from '@/components/portal/PortalShell'
+import OneSignalProvider from '@/components/OneSignalProvider'
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -33,6 +34,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <PortalShell user={user} profile={profile} isAdmin={false}>
+      <OneSignalProvider userId={user.id} />
       {children}
     </PortalShell>
   )

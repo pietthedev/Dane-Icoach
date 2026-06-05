@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { sendInvoicePaid } from '@/lib/email'
+import { sendNotification } from '@/lib/notifications'
 import crypto from 'crypto'
 
 // Always use service role — webhook has no user session
@@ -207,6 +208,16 @@ export async function POST(req: NextRequest) {
         sendInvoicePaid(customer.email, firstName, invoiceNumber, formatted, planLabel)
           .catch(err => console.error('[email] sendInvoicePaid failed:', err))
       }
+
+      // Push notification: upgrade confirmation
+      const planLabel = userPlan.charAt(0).toUpperCase() + userPlan.slice(1)
+      sendNotification({
+        userId,
+        title:   `Welcome to ${planLabel}! 🎉`,
+        message: 'Your account has been upgraded. Your new voice and conversation limits are active now.',
+        url:     `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/portal/billing`,
+        type:    'invoice_paid',
+      }).catch(console.error)
 
       console.log(`[paystack webhook] charge.success: user=${userId} plan=${userPlan} ref=${reference}`)
     }

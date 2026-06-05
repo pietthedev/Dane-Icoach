@@ -12,5 +12,6 @@
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [],
-  "categories": ["health", "lifestyle", "education"]
+  "categories": ["health", "lifestyle", "education"],
+  "gcm_sender_id": "482941778795"
 }

@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -58,6 +58,18 @@ export default function PortalShell({ user, profile, isAdmin = false, children }
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Fetch unread notification count on mount
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('read', false)
+      .then(({ count }) => setUnreadCount(count ?? 0))
+      .catch(() => {})
+  }, [pathname]) // re-check when navigating
 
   const displayName = profile?.full_name ?? user.email?.split('@')[0] ?? 'You'
 
@@ -100,7 +112,12 @@ export default function PortalShell({ user, profile, isAdmin = false, children }
             }`}
           >
             <span aria-hidden="true" className="text-base w-5 text-center">{item.icon}</span>
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.href === '/portal/notifications' && unreadCount > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${active ? 'bg-white/30 text-white' : 'bg-accent text-white'}`}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Link>
         )
       })}

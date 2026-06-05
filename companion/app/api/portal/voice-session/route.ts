@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendNotification } from '@/lib/notifications'
 
 interface Message {
   role: 'user' | 'agent'
@@ -211,6 +212,15 @@ export async function POST(req: NextRequest) {
       if (sumError) console.error('[voice-session] Failed to save summary:', sumError)
       else console.log(`[voice-session] Summary saved (source: ${generatedBy})`)
     }
+
+    // Notify the user that their summary is ready (fire-and-forget)
+    sendNotification({
+      userId:  user.id,
+      title:   'Your session summary is ready',
+      message: 'Tap to view your transcript, key topics and action items.',
+      url:     `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/portal/conversations`,
+      type:    'summary_ready',
+    }).catch(console.error)
 
     return NextResponse.json({ conversation_id: conv.id })
   } catch (err) {

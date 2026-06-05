@@ -11,6 +11,45 @@ const TYPE_STYLES: Record<string, string> = { info: 'bg-blue-100 text-blue-700',
 
 export default function AnnouncementsPage() {
   const [items, setItems] = useState<Announcement[]>([])
+
+  // ── Push notification state ──────────────────────────────────────────────
+  const [pushTitle,    setPushTitle]    = useState('')
+  const [pushMessage,  setPushMessage]  = useState('')
+  const [pushUrl,      setPushUrl]      = useState('')
+  const [pushTarget,   setPushTarget]   = useState<'all' | 'user'>('all')
+  const [pushUserId,   setPushUserId]   = useState('')
+  const [pushSending,  setPushSending]  = useState(false)
+  const [pushFeedback, setPushFeedback] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  async function sendPush() {
+    if (!pushTitle || !pushMessage) return
+    setPushSending(true)
+    setPushFeedback(null)
+    try {
+      const res = await fetch('/api/notifications/send', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title:   pushTitle,
+          message: pushMessage,
+          url:     pushUrl || undefined,
+          target:  pushTarget,
+          user_id: pushTarget === 'user' ? pushUserId : undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setPushFeedback({ ok: false, msg: data.error ?? 'Failed to send' })
+      } else {
+        setPushFeedback({ ok: true, msg: pushTarget === 'all' ? 'Sent to all users!' : `Sent to ${pushUserId}` })
+        setPushTitle(''); setPushMessage(''); setPushUrl(''); setPushUserId('')
+      }
+    } catch {
+      setPushFeedback({ ok: false, msg: 'Network error' })
+    } finally {
+      setPushSending(false)
+    }
+  }
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [type, setType] = useState('info')
@@ -46,6 +85,33 @@ export default function AnnouncementsPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="font-poppins font-bold text-plum-dark text-2xl mb-6" style={{ letterSpacing: '-0.04em' }}>Announcements</h1>
+
+      {/* ── Push Notifications ── */}
+      <div className="bg-white rounded-3xl p-5 border border-line shadow-card mb-6">
+        <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-1">🔔 Send push notification</h2>
+        <p className="font-inter text-xs text-muted mb-4">Sends a browser/mobile push notification via OneSignal and stores it in-app.</p>
+        <div className="flex flex-col gap-3">
+          <input value={pushTitle} onChange={e => setPushTitle(e.target.value)} placeholder="Notification title" className="font-inter text-sm border border-mist rounded-2xl px-4 py-2.5 bg-cloud focus:outline-none focus:border-plum" />
+          <textarea value={pushMessage} onChange={e => setPushMessage(e.target.value)} rows={2} placeholder="Message…" className="font-inter text-sm border border-mist rounded-2xl px-4 py-3 bg-cloud focus:outline-none focus:border-plum resize-none" />
+          <input value={pushUrl} onChange={e => setPushUrl(e.target.value)} placeholder="URL to open (optional — defaults to /portal/notifications)" className="font-inter text-sm border border-mist rounded-2xl px-4 py-2.5 bg-cloud focus:outline-none focus:border-plum" />
+          <div className="flex gap-2">
+            <button onClick={() => setPushTarget('all')} className={`font-inter text-xs px-3 py-1.5 rounded-full transition-colors ${pushTarget === 'all' ? 'bg-plum text-white' : 'bg-mist text-muted'}`}>All users</button>
+            <button onClick={() => setPushTarget('user')} className={`font-inter text-xs px-3 py-1.5 rounded-full transition-colors ${pushTarget === 'user' ? 'bg-plum text-white' : 'bg-mist text-muted'}`}>Specific user</button>
+          </div>
+          {pushTarget === 'user' && (
+            <input value={pushUserId} onChange={e => setPushUserId(e.target.value)} placeholder="User ID (UUID)" className="font-inter text-sm border border-mist rounded-2xl px-4 py-2.5 bg-cloud focus:outline-none focus:border-plum font-mono" />
+          )}
+          {pushFeedback && (
+            <p className={`font-inter text-xs px-3 py-2 rounded-xl ${pushFeedback.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+              {pushFeedback.ok ? '✓ ' : '✗ '}{pushFeedback.msg}
+            </p>
+          )}
+          <button onClick={sendPush} disabled={pushSending || !pushTitle || !pushMessage || (pushTarget === 'user' && !pushUserId)}
+            className="font-inter font-semibold text-sm text-white px-5 py-2.5 rounded-full bg-plum hover:bg-plum-dark disabled:opacity-60 transition-colors shadow-soft w-fit">
+            {pushSending ? 'Sending…' : '🔔 Send push'}
+          </button>
+        </div>
+      </div>
 
       <div className="bg-white rounded-3xl p-5 border border-line shadow-card mb-6">
         <h2 className="font-inter font-semibold text-plum-dark text-sm uppercase tracking-wide mb-3">Create announcement</h2>
