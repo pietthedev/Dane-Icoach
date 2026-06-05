@@ -8,13 +8,13 @@ export async function GET(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
     const { searchParams } = new URL(req.url)
-    const conversationId   = searchParams.get('conversation_id') // our Supabase conversation id
+    const conversationId = searchParams.get('conversation_id')
 
     if (!conversationId) {
       return NextResponse.json({ error: 'conversation_id required' }, { status: 400 })
     }
 
-    // Verify the conversation belongs to this user and get elevenlabs_conversation_id
+    // Verify ownership and get elevenlabs_conversation_id
     const { data: conv } = await supabase
       .from('conversations')
       .select('id, elevenlabs_conversation_id')
@@ -26,48 +26,59 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const elevenLabsId = conv.elevenlabs_conversation_id
+    const elevenLabsId = conv.elevenlabs_conversation_id as string | null
     if (!elevenLabsId) {
-      return NextResponse.json({ audio_url: null, reason: 'No ElevenLabs recording for this conversation' })
+      return NextResponse.json({ error: 'No ElevenLabs recording for this conversation' }, { status: 404 })
     }
 
     const apiKey = process.env.ELEVENLABS_API_KEY
     if (!apiKey) {
+      console.error('[conversation-audio] ELEVENLABS_API_KEY not set')
       return NextResponse.json({ error: 'ElevenLabs API not configured' }, { status: 500 })
     }
 
-    // Fetch conversation metadata from ElevenLabs to get the audio URL
-    const elRes = await fetch(
+    // ── First: log the full conversation metadata for debugging ─────────────
+    const metaRes = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversations/${elevenLabsId}`,
-      {
-        headers: { 'xi-api-key': apiKey },
-      }
+      { headers: { 'xi-api-key': apiKey } }
     )
-
-    if (!elRes.ok) {
-      if (elRes.status === 404) {
-        return NextResponse.json({ audio_url: null, reason: 'Recording not found on ElevenLabs' })
-      }
-      console.error('[conversation-audio] ElevenLabs error:', elRes.status)
-      return NextResponse.json({ audio_url: null, reason: 'Could not retrieve recording' })
+    if (metaRes.ok) {
+      const meta = await metaRes.json()
+      console.log('[conversation-audio] ElevenLabs metadata:', JSON.stringify(meta, null, 2))
+    } else {
+      console.warn('[conversation-audio] Metadata fetch status:', metaRes.status)
     }
 
-    const elData = await elRes.json()
+    // ── Stream the binary audio directly from ElevenLabs /audio endpoint ────
+    const audioRes = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversations/${elevenLabsId}/audio`,
+      { headers: { 'xi-api-key': apiKey } }
+    )
 
-    // ElevenLabs returns audio_recording_url and audio_recording_expires_at
-    const audioUrl       = (elData.audio_recording_url as string | null) ?? null
-    const expiresAt      = (elData.audio_recording_expires_at as string | null) ?? null
-    const durationSecs   = (elData.metadata?.call_duration_secs as number | null) ?? null
-    const cost           = (elData.metadata?.cost as number | null) ?? null
+    console.log('[conversation-audio] Audio endpoint status:', audioRes.status)
+    console.log('[conversation-audio] Audio content-type:', audioRes.headers.get('content-type'))
 
-    return NextResponse.json({
-      audio_url:    audioUrl,
-      expires_at:   expiresAt,
-      duration_secs: durationSecs,
-      cost_credits:  cost,
-    })
+    if (!audioRes.ok) {
+      console.error('[conversation-audio] Audio fetch failed:', audioRes.status, await audioRes.text())
+      return NextResponse.json(
+        { error: 'Audio not available', status: audioRes.status },
+        { status: 404 }
+      )
+    }
+
+    // Pipe the binary stream straight back to the browser
+    const contentType = audioRes.headers.get('content-type') ?? 'audio/mpeg'
+    const contentLength = audioRes.headers.get('content-length')
+
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'Cache-Control': 'private, max-age=3600',
+    }
+    if (contentLength) headers['Content-Length'] = contentLength
+
+    return new NextResponse(audioRes.body, { status: 200, headers })
   } catch (err) {
-    console.error('[conversation-audio]', err)
+    console.error('[conversation-audio] Error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -17,12 +17,6 @@ interface Conversation {
   conversation_ratings?: { rating: number | null; color_tag: ColorTag; notes: string | null }[]
 }
 
-interface AudioData {
-  audio_url: string | null
-  expires_at: string | null
-  duration_secs: number | null
-  cost_credits: number | null
-}
 
 interface Summary {
   summary: string
@@ -73,9 +67,7 @@ export default function ConversationsPage() {
   const [savedFeedback, setSavedFeedback] = useState<string | null>(null)
   const [sharedWithCoach, setSharedWithCoach] = useState(false)
   const [savingPrivacy, setSavingPrivacy] = useState(false)
-  // Audio recording
-  const [audioData, setAudioData] = useState<AudioData | null>(null)
-  const [loadingAudio, setLoadingAudio] = useState(false)
+  // (audio is streamed directly via API route — no client-side state needed)
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -145,17 +137,7 @@ export default function ConversationsPage() {
     setSharedWithCoach(conv.shared_with_coach)
     setActiveTab('summary')
     setSavedFeedback(null)
-    setAudioData(null)
     loadSummary(conv.id)
-    // Fetch audio data for voice conversations with an ElevenLabs ID
-    if (conv.elevenlabs_conversation_id) {
-      setLoadingAudio(true)
-      fetch(`/api/portal/conversation-audio?conversation_id=${conv.id}`)
-        .then(r => r.json())
-        .then((d: AudioData) => setAudioData(d))
-        .catch(() => setAudioData(null))
-        .finally(() => setLoadingAudio(false))
-    }
     setMobileView('detail') // on mobile: switch to detail panel
   }
 
@@ -330,46 +312,26 @@ export default function ConversationsPage() {
                         </div>
                       )
                     })()}
-                    {audioData?.cost_credits != null && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-inter text-[10px] text-muted uppercase tracking-wide">Credits</span>
-                        <span className="font-inter text-xs text-ink font-semibold">{audioData.cost_credits}</span>
-                      </div>
-                    )}
                   </div>
                 )}
 
-                {/* ── Audio player ── */}
+                {/* ── Audio player — streamed directly from API route ── */}
                 {selected.elevenlabs_conversation_id && (
                   <div className="bg-white rounded-2xl border border-line p-4">
                     <p className="font-inter font-semibold text-xs text-plum-dark uppercase tracking-wide mb-2">
                       🎙️ Voice recording
                     </p>
-                    {loadingAudio ? (
-                      <p className="font-inter text-xs text-muted">Loading recording…</p>
-                    ) : audioData?.audio_url ? (
-                      <div className="flex flex-col gap-1.5">
-                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-                        <audio
-                          controls
-                          src={audioData.audio_url}
-                          className="w-full h-10"
-                          style={{ borderRadius: '12px' }}
-                        />
-                        {audioData.expires_at && (
-                          <p className="font-inter text-[10px] text-muted">
-                            Available until{' '}
-                            {new Date(audioData.expires_at).toLocaleDateString('en-ZA', {
-                              day: 'numeric', month: 'short', year: 'numeric',
-                            })}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="font-inter text-xs text-muted">
-                        Recording not available — it may have expired or is still processing.
-                      </p>
-                    )}
+                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                    <audio
+                      controls
+                      src={`/api/portal/conversation-audio?conversation_id=${selected.id}`}
+                      className="w-full h-10"
+                      style={{ borderRadius: '12px' }}
+                      preload="none"
+                    />
+                    <p className="font-inter text-[10px] text-muted mt-1.5">
+                      Voice recording — available for 30 days after the session
+                    </p>
                   </div>
                 )}
 
