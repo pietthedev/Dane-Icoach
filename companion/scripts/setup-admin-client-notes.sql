@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS admin_client_notes (
   updated_at timestamptz DEFAULT now()
 );
 
+-- If the table already exists without the body column, add it:
+ALTER TABLE admin_client_notes ADD COLUMN IF NOT EXISTS body text;
+
 -- Service role bypasses RLS, but add a basic policy so anon key can't read these
 ALTER TABLE admin_client_notes ENABLE ROW LEVEL SECURITY;
 
